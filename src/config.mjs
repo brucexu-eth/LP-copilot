@@ -1,0 +1,10 @@
+export const CHAIN_ID = 1;
+export const POOL = '0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8';
+export const FACTORY = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
+export const MANAGER = '0xC36442b4a4522E871399CD717aBDD847Ab11FE88';
+export const USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
+export const WETH = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
+export const FEE = 3000;
+export const SUBGRAPH = '5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV';
+export const MAX_AGE_SECONDS = 180;
+export const MAX_GRAPH_LAG = 100;

@@ -1,0 +1,66 @@
+# LP Copilot
+
+**Understand one Uniswap v3 position before deciding whether to move it.**
+
+Iteration 1 is a small, read-only learning workbench, not a trading agent. It uses live Ethereum pool state to compare keeping a range, widening it with the same inventory, and withdrawing into both tokens.
+
+## Run locally
+
+Node.js 20.11+ and npm are required. A maintained Node LTS is recommended.
+
+```sh
+npm ci --ignore-scripts
+npm start
+# Open http://127.0.0.1:3400
+```
+
+Optional configuration:
+
+```sh
+cp .env.example .env
+# Edit ETH_RPC_URL and optionally GRAPH_API_KEY.
+npm run dev
+```
+
+The default public RPC may be rate-limited. Use your own Ethereum RPC if necessary. The server binds to loopback only. No wallet keys are needed or accepted. Do not expose this development server publicly.
+
+## Try the small loop
+
+1. Select **Learning position at the live pool price** and click **Read & compare**. The pool is live; this position is hypothetical and labeled accordingly.
+2. Compare HOLD, WIDEN and EXIT. All start with the same LP inventory. WIDEN keeps unused tokens idle; EXIT keeps USDC and WETH, not just stablecoins.
+3. Read the price scenarios and provenance. These are inventory values, not net profit or future returns. No accrued/future fees or execution costs are included.
+4. Select **Import a public NFT token ID**. Sample `1361432` was verified in this pool on 2026-09-05; it belongs to a public third-party position, not an application user. Its future liquidity/existence can change.
+5. Try NFT `1`, which is not in the supported pool, to see an explicit rejection. Previous results are cleared when the input changes.
+
+## Integration boundaries
+
+- **Uniswap v3:** Ethereum USDC/WETH 0.3% pool [`0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8`](https://etherscan.io/address/0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8). [Contract reads and identity checks](src/data.mjs), [pinned addresses](src/config.mjs), [integer inventory/scenario math](src/math.mjs), [SDK cross-checks](test/math.test.mjs).
+- **The Graph:** optional pinned-block pool history adapter in [src/data.mjs](src/data.mjs). Requires a Studio API key. Missing/invalid/stale data is never replaced by fixtures. Live Graph verification is still pending, so this iteration is **not Graph AI prize-ready**.
+- **AI / LI.FI / execution:** not implemented in iteration 1. The explanations are deterministic educational text, not generated research. There are no transaction endpoints, wallet connections or fake quotes.
+
+Token amounts use integer arithmetic and SDK range sizing; display values and scenarios use floating-point arithmetic and are approximate. No approval or execution should consume these display values. Stored NFT `tokensOwed` does not include all accrued fees and is not presented as a total claimable balance.
+
+## Verify
+
+```sh
+npm run check
+npm run verify:live
+SAMPLE_TOKEN_ID=1361432 npm run verify:live
+# While npm start runs in another terminal:
+npx playwright install chromium
+node scripts/verify-browser.mjs
+```
+
+Unit/HTTP tests use explicitly synthetic fixtures; `verify:live` and `verify-browser` use real public RPC data and can fail when the provider is unavailable. Live artifacts are written to ignored `artifacts/` and must be reviewed before sharing. Tests do not send transactions.
+
+## Small roadmap & submission
+
+- [Simplified product scope](docs/PRD.md)
+- [AI assistance disclosure and remaining artifact gate](docs/AI_DISCLOSURE.md)
+- [ETHOnline checklist](docs/HACKATHON.md)
+- [Uniswap integration feedback](FEEDBACK.md)
+- [Security boundaries](SECURITY.md)
+
+Next: verify Graph history, then add a bounded evidence-grounded AI investigation. LI.FI quote and isolated-fork execution follow only when needed. Do not expand into a full portfolio platform.
+
+Private development precedes a reviewed open-source release. No hackathon form, public release, demo recording or license approval has been completed by this repository.

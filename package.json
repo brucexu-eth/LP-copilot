@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "description": "A read-only Uniswap v3 position learning and comparison workbench",
-  "engines": {"node": ">=20.11"},
+  "engines": {
+    "node": ">=20.11"
+  },
   "scripts": {
     "dev": "node --env-file=.env server.mjs",
     "start": "node server.mjs",
@@ -12,5 +14,12 @@
     "check": "node --check server.mjs && node --check public/app.js && npm test",
     "verify:live": "node scripts/verify-live.mjs"
   },
-  "dependencies": {"@uniswap/sdk-core": "7.18.0", "@uniswap/v3-sdk": "3.31.3", "viem": "2.56.3"}
+  "dependencies": {
+    "@uniswap/sdk-core": "7.19.2",
+    "@uniswap/v3-sdk": "3.31.3",
+    "viem": "2.56.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
 }
