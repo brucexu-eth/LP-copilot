@@ -1,6 +1,6 @@
 # LP Copilot — technical design
 
-Status: target architecture, 2026-09-07. Current runtime remains the read-only Ethereum learning workbench.
+Status: target architecture, 2026-09-08. This repository is the canonical development specification; translated copies are reading projections. Current runtime remains the read-only Ethereum learning workbench.
 
 ## Components
 - Registry: verified chainId, contracts, token identities, fee tiers, supported pools and supported LI.FI funding paths. Fail closed on unknown identities.
@@ -13,6 +13,8 @@ Status: target architecture, 2026-09-07. Current runtime remains the read-only E
 - Monitor: refresh state and evaluate alerts/rejection rules. Proposals do not mutate capital. Monitoring frequency, thresholds and notification channel must be configured before enabling a live monitor.
 
 ## Non-atomic execution
+See the [PRD](PRD.md) and [acceptance cases](specs/ACCEPTANCE.md) for the user-facing comparison contract.
+
 DRAFT -> AWAITING_APPROVAL -> VALIDATING -> FUNDING -> REMOVING_LIQUIDITY -> COLLECTING -> SWAPPING -> ADDING_LIQUIDITY -> RECONCILING -> COMPLETE.
 Skip steps that are not needed by the approved action. A funded entry need not remove an existing position; HOLD has no transaction steps.
 
@@ -26,3 +28,20 @@ Use only public APIs and public contract interfaces. Never ingest production pri
 
 ## Implementation status
 Existing source: src/config.mjs, src/data.mjs and src/math.mjs; deterministic explanations and a read-only HTTP/UI surface. AI, LI.FI funding, approval/execution journal and live monitoring are not implemented by this documentation change. Retain the current no-signing surface until the relevant tested slice lands.
+
+## AI investigation and comparison contract
+These are target contracts, not implemented method names.
+1. Intent: extract goal, chain/position identity, horizon, allowed comparison actions, budget, risk constraints and unresolved questions. Ask about materially missing preferences; conversation is not trading consent.
+2. Evidence snapshot: allowlisted reads return provenance, block/time, freshness and missing fields. Pin a block where supported; identify cross-block observations rather than presenting an atomic snapshot. Failed/stale/unknown reads must not be completed with model guesses.
+3. Scenario request: record starting inventory, price path, active/competing liquidity, volume, horizon, action timing, withdrawal disposition and cost assumptions. Compare HOLD, half/full withdrawal, conversion and supported range changes under identical conditions.
+4. Calculator response: return token amounts, range state, estimated fees, itemized costs, scenario PnL, drawdown, executable exit value, assumptions and calculation version. Record unavailable metrics explicitly. Separate hypothetical, replayed and realized results; do not subtract impermanent loss twice.
+5. Explanation/UI: explanations must agree with tool values. Show evidence, assumptions, action outcomes, HOLD, unknowns and conditions that change the conclusion. Position details, comparison and approval/execution state are distinct UI surfaces; prose does not replace approval controls.
+6. Execution handoff: a selected action becomes a versioned plan, then passes policy checks, explicit approval and user-wallet signing. The explanation layer has no signing authority. Reconcile each result through the durable execution journal.
+
+## Robinhood / PONS / Graph integration gates
+- Revalidate the network, contract identities and runtime code against official sources and live RPC before registry activation. Historical candidate observations are discovery inputs, not a permanent allowlist. Public RPC rate limits require bounded retry/backoff, throttling, caching and visible errors; prefer suitable free hosted capacity initially, with provider credentials held server-side only.
+- Verify PONS official identity, token ordering/decimals, actual DEX/version, fee tier, permissions and sell/exit route. Record unsupported protocols rather than applying an incorrect ABI. WETH/USDG is a reference candidate; neither a symbol nor a quote proves the intended pool identity.
+- Graph adapter: pin chain, deployment, schema, query and provider; return indexedBlock, observedAt and hasIndexingErrors. Query actual target-pool/history fields. When supported, cross-check price/tick/liquidity through RPC at the same block tag. Configure freshness limits explicitly; absent history is not zero.
+- Discovery/authentication failure, timeout, HTTP 429, schema drift, wrong chain, missing pool and index lag must have visible recoverable errors and bounded fallback. Never silently switch chains or substitute fixtures. RPC-only mode must show Graph as unconnected/incomplete and identify unavailable history/discovery features.
+- Practice entry: isolate rehearsal; bind plan fingerprint, budget, token, ticks, spender, allowance, costs and expiry before signing. Verify receipt, actual position identifier (NFT tokenId only where applicable), pool and balances after execution; reconcile unknown outcomes before retry. Private keys never enter the app or agent.
+- Exercise the real API -> adapter -> UI path and deterministic/negative tests. Use the newly read position for in/out-of-range, decline, liquidity-withdrawal and exit-cost scenarios with HOLD. Fork success is not mainnet entry; label each environment and obtain separate authorization for real funds.
