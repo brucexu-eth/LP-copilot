@@ -6,7 +6,7 @@ LP Copilot assists liquidity providers across a bounded lifecycle: evaluate supp
 ## Human and AI contributions
 The human contributor selected the problem, approved the expanded lifecycle, specified the preferred network for investigation, defined automatic monitoring versus approved capital actions, and directed the product-only disclosure policy. These decisions are not a claim that the human authored all implementation code or completed acceptance testing.
 
-The existing repository records its initial implementation as AI-assisted by July on Hermes Agent using gpt-6-astra. For this revision, July using gpt-6-astra prepared the PRD, technical design, specifications, implementation plan, edited prompt record and this report, and updated submission documentation. Application source code was not implemented or changed by this documentation revision.
+The existing repository records its initial implementation as AI-assisted using Hermes Agent and gpt-6-astra. For this revision, an AI coding assistant using gpt-6-astra prepared the PRD, technical design, specifications, implementation plan, edited prompt record and this report, and updated submission documentation. Application source code was not implemented or changed by this documentation revision.
 
 ## Current evidence and intended expansion
 The current code is a read-only Ethereum v3 learning workbench with public position import and deterministic scenario comparison. Robinhood support, live Graph prize readiness, AI investigation, LI.FI funding, approved execution and monitoring must be verified and implemented before being represented as working features.
