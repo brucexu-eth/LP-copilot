@@ -26,6 +26,9 @@ Validate Robinhood against official network documentation and actual RPC, Uniswa
 ## Security and operating boundaries
 Use only public APIs and public contract interfaces. Never ingest production private keys. Check destination, spender, calldata target, amounts, fee limits, quote expiry, allowance scope and chain identity. Block stale data, insufficient funds, unexpected contracts, invalid approval and excessive costs. Isolate fork execution and test wallets. Mainnet activity needs explicit authorization.
 
+## Intent-based range-order design
+See [RANGE_ORDERS.md](specs/RANGE_ORDERS.md) for the intent schema, integer price/tick mapping, accounting rules and required fixtures. Reuse the approval/execution journal, but separate entry transaction completion from reversible principal conversion and final removal/collection settlement. A fully converted position remains exposed until liquidity is removed; collection failure after removal is unsettled proceeds, not live LP exposure. No automatic withdrawal is enabled.
+
 ## Implementation status
 Existing source: src/config.mjs, src/data.mjs and src/math.mjs; deterministic explanations and a read-only HTTP/UI surface. AI, LI.FI funding, approval/execution journal and live monitoring are not implemented by this documentation change. Retain the current no-signing surface until the relevant tested slice lands.
 

@@ -5,6 +5,11 @@ Updated: 2026-09-08. This repository is the canonical development specification;
 ## Purpose
 Help liquidity providers evaluate opportunities, understand exposure and costs, and carry out explicitly approved LP operations. The intended value is better-informed LP participation, not guaranteed profit or autonomous market timing.
 
+## Signature feature candidate: intent-based LP buy/sell
+Use single-sided range orders to buy below spot or sell above spot at prices the user already accepts, without a default half-token purchase. Differentiate through intent-to-range preview, net conversion/fees/cost accounting and withdrawal-aware completion, not APR promises. Full conversion can reverse before removal; ordinary range orders are not stop-loss orders. The dashboard must distinguish converted principal from withdrawn, reconciled proceeds.
+
+The [range-order product, UX and design contract](specs/RANGE_ORDERS.md) defines the LAPTOP/USDC example, metrics, state machine, risks and acceptance fixtures. LAPTOP is illustrative, not a verified integration or replacement practice target. This is a proposed signature feature, not shipped capability; withdrawal still requires explicit approval and signing.
+
 ## Full product workflow
 1. Screen a bounded, explicitly supported pool universe using sourced liquidity, volume, fees, price history and integration availability. Missing evidence is not a recommendation.
 2. Select a chain and pool, explain alternatives, and specify fee tier, inventory, range, budget and constraints.

@@ -2,6 +2,11 @@
 
 These are required tests, not test results.
 
+## Intent-based range-order acceptance
+The [required range-order fixtures](RANGE_ORDERS.md#required-acceptance-fixtures-not-test-results) are part of this acceptance contract: single-sided buy/sell, token inversion/tick rounding, no/partial/full conversion, reversal, falling-token accumulation, entry drift, manual withdrawal approval, removal/collection failures, restart safety and fee/cost accounting. Neither full conversion nor an entry transaction marked COMPLETE proves withdrawn proceeds. These requirements do not claim test execution.
+
+## Core lifecycle acceptance
+
 - Import: valid supported public position reads at a pinned block; wrong-chain/wrong-pool input is rejected; hypothetical learning positions stay labeled.
 - Screening: unknown or unsupported pools cannot enter an executable plan; stale/absent history is shown, not scored as zero risk.
 - Math: token0/token1, decimals, tick boundaries, rounding and residual inventory cross-check against a reference implementation.
