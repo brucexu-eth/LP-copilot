@@ -10,6 +10,8 @@
   "scripts": {
     "build": "vite build",
     "predev": "npm run build",
+    "predev:mock": "npm run build",
+    "dev:mock": "GRAPH_MODE=mock node --env-file=.env server.mjs",
     "dev": "node --env-file=.env server.mjs",
     "start": "node server.mjs",
     "test": "node --test test/*.test.mjs",
@@ -21,6 +23,7 @@
     "@privy-io/react-auth": "^3.42.0",
     "@uniswap/sdk-core": "7.19.2",
     "@uniswap/v3-sdk": "3.31.3",
+    "better-sqlite3": "12.6.2",
     "jose": "^6.2.12",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

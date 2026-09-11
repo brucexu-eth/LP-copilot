@@ -1,6 +1,6 @@
 import {PrivyClient,verifyAccessToken} from '@privy-io/node';
 
-function failure(status,message){return Object.assign(new Error(message),{status});}
+function failure(status,message){return Object.assign(new Error(message),{status,expose:true});}
 export function createAuth(env=process.env,adapters={}) {
  const appId=env.PRIVY_APP_ID||null;
  const configured=Boolean(appId&&env.PRIVY_APP_SECRET);

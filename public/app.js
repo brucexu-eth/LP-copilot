@@ -28,11 +28,11 @@ function render(data) {
  $('provenance').textContent=`${s.source} · Chain ${s.chainId} · Block ${s.blockNumber} · ${new Date(s.blockTimestamp*1000).toISOString()} · Observed ${s.observedAt} · Tick ${s.tick}.`;
  $('pool-link').href=`https://etherscan.io/address/${s.pool}`;
  $('graph-status').textContent=h.status==='verified'?`The Graph verified at block ${h.blockNumber}. ${h.note}`:h.message;
- $('history').replaceChildren();if(h.status==='verified')for(const d of h.days)$('history').append(text('p',`${new Date(d.date*1000).toISOString().slice(0,10)}: pool volume ${number(Number(d.volumeUSD))} USD · TVL ${number(Number(d.tvlUSD))} USD · pool fees ${number(Number(d.feesUSD))} USD`));
+ $('history').replaceChildren();if(['verified','mock'].includes(h.status))for(const d of h.days)$('history').append(text('p',`${h.synthetic?'MOCK · ':''}${new Date(d.date*1000).toISOString().slice(0,10)}: pool volume ${number(Number(d.volumeUSD))} USD · TVL ${number(Number(d.tvlUSD))} USD · pool fees ${number(Number(d.feesUSD))} USD`));
  $('candidates').replaceChildren();for(const c of r.candidates){const e=text('article','','candidate');e.append(text('div',c.action,'action'),text('h3',c.label),text('p',`${number(c.currentValueUsdc)} USDC`,'value'),text('p','Current inventory value, before costs'),text('p',c.explanation));const dl=document.createElement('dl');for(const [k,v] of [['Range',c.range?`${number(c.range.low)} – ${number(c.range.high)} USDC/WETH`:'No active liquidity'],['Idle inventory',`${number(c.idle.usdc)} USDC + ${number(c.idle.weth,6)} WETH`],['Execution costs',c.action==='HOLD'?'No transaction required':'Unknown — not included']])dl.append(text('dt',k),text('dd',v));e.append(dl);$('candidates').append(e);}
  $('scenarios').replaceChildren();r.scenarios.forEach((s,i)=>{const row=document.createElement('tr');row.append(text('td',`${number(s.priceUsdc)} (${s.changePct>=0?'+':''}${number(s.changePct,1)}%)`));for(const c of r.candidates)row.append(text('td',number(c.scenarios[i].valueUsdc)));$('scenarios').append(row);});
  $('disclaimer').textContent=r.disclaimer;$('explanation-mode').textContent=data.explanationMode;chart(r);$('results').hidden=false;
- $('status').textContent='Comparison ready. Read-only snapshot — not an execution plan.';
+ $('status').textContent=h.synthetic?'MOCK HISTORY active. Pool price is live RPC; history is invented. Execution disabled.':'Comparison ready. Read-only snapshot — not an execution plan.';
 }
 $('analyze-form').addEventListener('submit',async event=>{
  event.preventDefault();reset();const run=generation;controller=new AbortController();$('analyze').disabled=true;$('status').textContent='Reading the live pool and verifying its identity…';

@@ -1,6 +1,8 @@
 import React,{useEffect,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {PrivyProvider,usePrivy} from '@privy-io/react-auth';
+import {Research} from './Research.jsx';
+import {Wallets} from './Wallets.jsx';
 
 function Account(){
  const {ready,authenticated,login,logout,getAccessToken,user}=usePrivy();
@@ -22,11 +24,11 @@ function Account(){
  return <><div className="section-head"><h2>Your account</h2><span className="badge">SIGNING DISABLED</span></div>
  {!authenticated?<button onClick={login}>Sign in with Privy</button>:<>
  <p>Signed in: {user?.id}</p><button onClick={()=>{setAccount(null);setError('');logout();}}>Sign out</button>
- {error?<p role="alert">{error} <button onClick={()=>setAttempt(x=>x+1)}>Retry account lookup</button></p>:!account?<p role="status">Verifying account…</p>:<>
+ {error?<p role="alert">{error} <button onClick={()=>setAttempt(x=>x+1)}>Retry account lookup</button></p>:(!account||account.userId!==user?.id)?<p role="status">Verifying account…</p>:<>
  <p>Backend-verified account. {account.wallets.length?'Linked Ethereum wallets:':'No linked Ethereum wallet yet.'}</p>
- <ul>{account.wallets.map(w=><li key={w.walletId||w.address}>{w.address} — {w.clientType||'external'}</li>)}</ul></>}
+ <ul>{account.wallets.map(w=><li key={w.walletId||w.address}>{w.address} — {w.clientType||'external'}</li>)}</ul><Wallets key={account.userId+attempt} account={account} getAccessToken={getAccessToken} onChanged={()=>setAttempt(x=>x+1)}/><Research key={account.userId} getAccessToken={getAccessToken}/></>}
  </>}
- <p className="muted">Login does not authorize wallet operations. Wallet creation, funding and delegated management are not enabled in this build.</p></>;
+ <p className="muted">Login does not grant transaction authority. Wallet creation requires your explicit click. Funding, signing and delegated management remain disabled.</p></>;
 }
 const root=createRoot(document.getElementById('auth-root'));
 fetch('/api/config',{cache:'no-store'}).then(async r=>{if(!r.ok)throw Error();return r.json();}).then(config=>{

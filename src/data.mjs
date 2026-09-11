@@ -16,9 +16,9 @@ export function validatePositionId(id) {
 export function client() {
  return createPublicClient({chain:mainnet,transport:http(process.env.ETH_RPC_URL||'https://1rpc.io/eth',{timeout:15000,retryCount:1})});
 }
-export async function readPool(c=client()) {
+export async function readPool(c=client(),{expectedChainId=CHAIN_ID}={}) {
  const [chainId,block]=await Promise.all([c.getChainId(),c.getBlock()]);
- if(chainId!==CHAIN_ID) throw new Error('Wrong RPC chain: Ethereum mainnet (1) is required.');
+ if(chainId!==expectedChainId) throw new Error('Wrong RPC chain: configured chain ID is required.');
  validateFresh(Number(block.timestamp));
  const contracts=['slot0','liquidity','token0','token1','fee','tickSpacing'].map(functionName=>({address:POOL,abi:poolAbi,functionName}));
  contracts.push({address:FACTORY,abi:factoryAbi,functionName:'getPool',args:[USDC,WETH,FEE]},...[[USDC,6],[WETH,18]].map(([address])=>({address,abi:erc20Abi,functionName:'decimals'})));

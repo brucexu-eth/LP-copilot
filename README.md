@@ -2,7 +2,7 @@
 
 **Evaluate LP opportunities, understand exposure, and plan explicitly approved operations.**
 
-Iteration 1 is a small, read-only learning workbench, not a trading agent. It uses live Ethereum pool state to compare keeping a range, widening it with the same inventory, and withdrawing into both tokens.
+The current build adds authenticated, durable AI research and user-initiated Privy wallet creation to the read-only LP workbench. It uses live Ethereum pool state to compare keeping a range, widening it with the same inventory, and withdrawing into both tokens. Signing and automated management are not enabled. See [current development evidence and blockers](docs/RESEARCH_PROGRESS.md).
 
 ## Run locally
 
@@ -10,6 +10,7 @@ Node.js 20.11+ and npm are required. A maintained Node LTS is recommended.
 
 ```sh
 npm ci --ignore-scripts
+npm rebuild better-sqlite3
 npm run build
 npm start
 # Open http://127.0.0.1:3400
@@ -39,8 +40,10 @@ The default public RPC may be rate-limited. Use your own Ethereum RPC if necessa
 
 - **Uniswap v3:** Ethereum USDC/WETH 0.3% pool [`0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8`](https://etherscan.io/address/0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8). [Contract reads and identity checks](src/data.mjs), [pinned addresses](src/config.mjs), [integer inventory/scenario math](src/math.mjs), [SDK cross-checks](test/math.test.mjs).
 - **The Graph:** optional pinned-block pool history adapter in [src/data.mjs](src/data.mjs). Requires a Studio API key. Missing/invalid/stale data is never replaced by fixtures. Live Graph verification is still pending, so this iteration is **not Graph AI prize-ready**.
-- **Privy authentication foundation:** runtime-configured email login and server-side ES256 access-token validation for the exact app. `/api/me` resolves linked Ethereum wallets from the verified subject; `PRIVY_ALLOWED_USER_IDS` must list the exact operator DID (empty denies private access). No wallet creation, external wallet connection, delegation or signing is enabled.
-- **AI / LI.FI / execution:** not implemented. The explanations remain deterministic educational text, not generated research. There are no transaction endpoints or fake quotes.
+- **Privy authentication foundation:** runtime-configured email login and server-side ES256 access-token validation for the exact app. `/api/me` resolves linked Ethereum wallets from the verified subject; `PRIVY_ALLOWED_USER_IDS` must list the exact operator DID (empty denies private access). User-initiated embedded wallet creation is implemented; actual user acceptance is pending. External wallet connection, delegation and signing remain disabled.
+- **AI:** bounded DeepSeek tool calls read real RPC evidence and deterministic comparisons; private questions/results persist in application-local SQLite. The public comparison view retains deterministic notes. `DEEPSEEK_API_KEY` is required for chat.
+- **Graph development mode:** `npm run dev:mock` explicitly enables fixed, labelled synthetic history. It is never an automatic fallback and never evidence for trading.
+- **LI.FI / execution:** not integrated into the application. Typed unsigned mint/increase/decrease/collect builders have unit coverage; fork lifecycle acceptance is blocked. No transaction broadcast endpoint exists.
 
 Token amounts use integer arithmetic and SDK range sizing; display values and scenarios use floating-point arithmetic and are approximate. No approval or execution should consume these display values. Stored NFT `tokensOwed` does not include all accrued fees and is not presented as a total claimable balance.
 
@@ -67,6 +70,6 @@ Unit/HTTP tests use explicitly synthetic fixtures; `verify:live` and `verify-bro
 - [Uniswap integration feedback](FEEDBACK.md)
 - [Security boundaries](SECURITY.md)
 
-Target scope now includes bounded pool screening, LI.FI cross-chain funding, Uniswap entry and approved adjustments, AI-assisted scenarios and monitoring. Robinhood is the preferred network to investigate, not a supported runtime claim. See the [technical design](docs/TECHNICAL_DESIGN.md), [specifications](docs/specs/LP_LIFECYCLE.md), [acceptance cases](docs/specs/ACCEPTANCE.md), [implementation plan](docs/IMPLEMENTATION_PLAN.md) and [development report](docs/REPORT.md). The application in this commit remains iteration 1; no trading capability is enabled by these documents.
+Target scope now includes bounded pool screening, LI.FI cross-chain funding, Uniswap entry and approved adjustments, AI-assisted scenarios and monitoring. Robinhood is the preferred network to investigate, not a supported runtime claim. See the [technical design](docs/TECHNICAL_DESIGN.md), [specifications](docs/specs/LP_LIFECYCLE.md), [acceptance cases](docs/specs/ACCEPTANCE.md), [implementation plan](docs/IMPLEMENTATION_PLAN.md) and [development report](docs/REPORT.md). The application includes the research foundation described above; no trading capability is enabled by these documents.
 
 Private development precedes a reviewed open-source release. No hackathon form, public release, demo recording or license approval has been completed by this repository.
