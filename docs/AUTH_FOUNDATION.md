@@ -18,6 +18,9 @@
 - Existing RPC-backed learning/import browser regression passed at desktop and mobile: live public NFT loaded, invalid NFT rejected, old results cleared, no page errors or overflow.
 - Real SDK login modal rendered at desktop 1280px and mobile 390px, no uncaught page errors, no failed local asset requests and no horizontal overflow. One desktop Privy analytics request returned 403; mobile run had no upstream failures. No email or verification code was submitted.
 
+## Bounded review disposition
+An independent read-only review of code commit `5f51c9f` alleged that external-wallet disabling must be top-level config. Primary verification rejected this finding: installed SDK `types-D8YDZp5m.d.ts` defines `ExternalWalletsConfig` at line 1423, its `walletConnect`/`disableAllExternalWallets` members at 1467–1487, and `PrivyClientConfig.externalWallets?: ExternalWalletsConfig` at 1774. The existing nesting is correct. `embeddedWallets.ethereum.createOnLogin` is explicitly defined at 1776–1794. No corrective code change was warranted; actual login/wallet behavior remains an unperformed acceptance gate.
+
 ## Not verified / blockers
 - Actual user login and authenticated real-user wallet lookup await user participation; synthetic token tests are not real Privy sessions.
 - Operator DID allowlist is not configured. It must not be inferred from the first account or client request; operator approval is separate from login.
