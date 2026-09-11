@@ -4,6 +4,10 @@
 
 The current build adds authenticated, durable AI research and user-initiated Privy wallet creation to the read-only LP workbench. It uses live Ethereum pool state to compare keeping a range, widening it with the same inventory, and withdrawing into both tokens. Signing and automated management are not enabled. See [current development evidence and blockers](docs/RESEARCH_PROGRESS.md).
 
+## Offline management rehearsal
+
+An opt-in [Simulation Lab and real-integration TODO checklist](docs/MOCK_HANDOFF.md) now covers synthetic funding, policy confirmation, LP management, worker monitoring, partial failures and restart recovery. Start `npm run dev:mock` and open `http://127.0.0.1:3400/lab`, or use the secret-free startup command in that guide. All balances, authorization, bridges and execution there are **MOCK**; the original authenticated live-research routes are not bypassed. No real execution is enabled.
+
 ## Run locally
 
 Node.js 20.11+ and npm are required. A maintained Node LTS is recommended.

@@ -4,6 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {createAuth} from './src/auth.mjs';
 import {historyFor,historyMode} from './src/history.mjs';
 import {createWorkspace} from './src/workspace.mjs';
+import {simulationService} from './src/simulation-http.mjs';
 import {walletBalances} from './src/wallets.mjs';
 import {readdir} from 'node:fs/promises';
 import {client,readPool,readPosition,readHistory,validateFresh,validatePositionId} from './src/data.mjs';
@@ -11,6 +12,7 @@ import {analyze,learningPosition} from './src/math.mjs';
 const publicDir=new URL('./public/',import.meta.url);
 const assets=new Map([['/',['index.html','text/html']],['/app.js',['app.js','text/javascript']],['/style.css',['style.css','text/css']]]);
 export function createApp(deps={readPool,readPosition,readHistory:historyFor,client}) {
+ const simulation=deps.simulation||simulationService();
  const graphMode=historyMode();
  const auth=deps.auth||createAuth();
  const workspace=deps.workspace||createWorkspace({compare:async({mode,tokenId})=>{
@@ -31,6 +33,13 @@ export function createApp(deps={readPool,readPosition,readHistory:historyFor,cli
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Cache-Control','no-store');
   const json=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(data));};
   const path=new URL(req.url,'http://localhost').pathname;
+  if(path==='/api/simulation')return simulation.handle(req,res,json);
+  if(['/lab','/lab.js','/lab.css'].includes(path)){
+   if(!simulation.allowed(req))return json(404,{error:'Not found'});
+   if(req.method!=='GET')return json(405,{error:'GET required'});
+   const file=path==='/lab'?'lab.html':path.slice(1);res.setHeader('Content-Type',path==='/lab'?'text/html; charset=utf-8':path.endsWith('.js')?'text/javascript':'text/css');
+   try{res.end(await readFile(new URL(file,publicDir)));}catch{json(503,{error:'Simulation assets unavailable'});}return;
+  }
   if(req.method==='GET'&&path==='/api/config') return json(200,{...auth.publicConfig(),graphMode,aiConfigured:workspace.configured()});
   if(['/api/chat','/api/conversations'].includes(path)){
    try{
@@ -93,7 +102,8 @@ export function createApp(deps={readPool,readPosition,readHistory:historyFor,cli
    return json(503,{error:'Live data unavailable or stale. No sample data was substituted. Check ETH_RPC_URL and retry.'});
   }
  });
- server.on('close',()=>workspace.close());
+ server.on('listening',()=>simulation.start());
+ server.on('close',()=>{workspace.close();simulation.close();});
  server.requestTimeout=20000;server.headersTimeout=10000;
  return server;
 }

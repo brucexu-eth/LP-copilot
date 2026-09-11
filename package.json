@@ -11,11 +11,12 @@
     "build": "vite build",
     "predev": "npm run build",
     "predev:mock": "npm run build",
-    "dev:mock": "GRAPH_MODE=mock node --env-file=.env server.mjs",
+    "dev:mock": "GRAPH_MODE=mock ENABLE_SIMULATION_LAB=1 node --env-file=.env server.mjs",
     "dev": "node --env-file=.env server.mjs",
     "start": "node server.mjs",
     "test": "node --test test/*.test.mjs",
-    "check": "node --check server.mjs && node --check public/app.js && npm test && npm run build",
+    "check": "node --check server.mjs && node --check public/app.js && node --check public/lab.js && node --check src/simulation.mjs && node --check src/simulation-http.mjs && npm test && npm run build",
+    "verify:simulation": "node scripts/verify-simulation-browser.mjs",
     "verify:live": "node scripts/verify-live.mjs"
   },
   "dependencies": {
