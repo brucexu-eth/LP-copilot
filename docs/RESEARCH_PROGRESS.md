@@ -13,6 +13,11 @@ This is **partial delivery**, not completion of the managed LP MVP. Graph mocks 
 - Typed **unsigned** Uniswap mint/increase/decrease/collect construction, integer amounts, exact token approvals, fixed manager/recipient, chain/pool/owner checks, fresh state and bounded slippage/deadline. New one-sided range-order entries are rejected. These builders are not exposed as executable HTTP endpoints.
 
 ## Verification
+- Final source wiring is included in commit `1fbe350`. A clean checkout initially caught omitted staging of `server.mjs`; it was committed before delivery, then clean-checkout tests/build and browser restart tests were rerun successfully. Working-tree-only success was not accepted as release evidence.
+- Fresh worktree: `npm ci --ignore-scripts`, `npm rebuild better-sqlite3`, `npm run check` all passed on the final code. Installed SDKs emit Node engine warnings on the host's Node 20.11; CI uses Node 22. Public-hosting dependency review remains open.
+- Existing real-RPC learning/public NFT/invalid NFT browser checks passed at desktop/mobile with mock mode enabled. Explicit mock labels were asserted in the status and history rows.
+- Final real Privy login-modal smoke passed at desktop/mobile with no page errors or upstream failures. No user login/code submission was performed.
+- One read-only review found no confirmed P0/P1 in the changed source. It inspected the then-working-tree HTTP wiring, which is now committed unchanged in `1fbe350`; this is not a live execution security certification.
 - `npm test`: 29 tests passed before final release check.
 - `npm run check`: tests, syntax checks and production frontend build passed.
 - `node scripts/verify-research-browser.mjs`: desktop 1280 and mobile 390, no page errors or overflow; persistence/restart checks passed. Authentication/model were explicit test fixtures.
