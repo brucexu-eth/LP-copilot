@@ -56,6 +56,9 @@ These commands are startup instructions, not a claim that a server has been left
 
 ## Verification
 
+Frozen implementation: `0203752` (relative to `f32b7b3`). Clean-checkout canonical check passed with **38 tests, zero failures**, plus production frontend build. Desktop 1280 and mobile 390 browser runs both passed lifecycle, partial-failure service restart/resume, exit/revoke and layout checks; **zero external requests and zero page errors**. A single bounded independent read-only review found no confirmed newly introduced P0/P1. This excludes real integrations and inherited SDK advisories.
+
+
 - `npm run check` is the canonical syntax/test/build gate.
 - `npm run verify:simulation`: real desktop/mobile Chromium clicks, offline request interception, persistent service restart, partial failure/retry, exit/revoke and overflow checks.
 - Tests cover conservation, user-session isolation, idempotency/conflicts, capital/fee/expiry/slippage gates, pause/revoke, daily count/cooldown, two database handles, and a real child-process SIGKILL after a committed phase.
