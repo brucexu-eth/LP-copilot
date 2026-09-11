@@ -23,7 +23,7 @@
 - Operator DID allowlist is not configured. It must not be inferred from the first account or client request; operator approval is separate from login.
 - Graph API key is absent from the project environment. Real Graph coverage and Graph-to-AI flow remain unverified.
 - No deployed-site checks, funding, signatures, mainnet transactions or autonomous management were performed.
-- SDK build emits upstream annotation and large-chunk warnings; dependency/public-hosting security acceptance is separate. Do not expose this loopback development build as a completed production service.
+- `npm audit --omit=dev` reports 47 advisories (7 high, 29 moderate, 11 low; no critical), including transitive Uniswap/Privy dependencies. Reachability/remediation is not certified in this slice; dependency/public-hosting security acceptance remains blocked. Do not expose this loopback development build as a completed production service. SDK build also emits upstream annotation and large-chunk warnings.
 
 ## Reproduce
 `npm run check`
