@@ -2,13 +2,24 @@ import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {createAuth} from './src/auth.mjs';
+import {historyFor,historyMode} from './src/history.mjs';
+import {createWorkspace} from './src/workspace.mjs';
+import {walletBalances} from './src/wallets.mjs';
 import {readdir} from 'node:fs/promises';
 import {client,readPool,readPosition,readHistory,validateFresh,validatePositionId} from './src/data.mjs';
 import {analyze,learningPosition} from './src/math.mjs';
 const publicDir=new URL('./public/',import.meta.url);
 const assets=new Map([['/',['index.html','text/html']],['/app.js',['app.js','text/javascript']],['/style.css',['style.css','text/css']]]);
-export function createApp(deps={readPool,readPosition,readHistory,client}) {
+export function createApp(deps={readPool,readPosition,readHistory:historyFor,client}) {
+ const graphMode=historyMode();
  const auth=deps.auth||createAuth();
+ const workspace=deps.workspace||createWorkspace({compare:async({mode,tokenId})=>{
+  if(mode==='nft')validatePositionId(tokenId);
+  const state=await snapshot();
+  const position=mode==='nft'?await deps.readPosition(tokenId,state,deps.client()):learningPosition(state);
+  const result=analyze(state,position),history=await deps.readHistory(state);validateFresh(state.blockTimestamp);
+  return {state,result,history,execution:'disabled'};
+ }});
  let cached=null,loading=null;
  async function snapshot() {
   if(cached&&Date.now()-cached.at<30000) {validateFresh(cached.state.blockTimestamp);return cached.state;}
@@ -20,7 +31,24 @@ export function createApp(deps={readPool,readPosition,readHistory,client}) {
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Cache-Control','no-store');
   const json=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(data));};
   const path=new URL(req.url,'http://localhost').pathname;
-  if(req.method==='GET'&&path==='/api/config') return json(200,auth.publicConfig());
+  if(req.method==='GET'&&path==='/api/config') return json(200,{...auth.publicConfig(),graphMode,aiConfigured:workspace.configured()});
+  if(['/api/chat','/api/conversations'].includes(path)){
+   try{
+    if(path==='/api/chat'&&req.method!=='POST'||path==='/api/conversations'&&req.method!=='GET')return json(405,{error:'Method not allowed'});
+    if(req.headers.origin&&req.headers.origin!==(process.env.APP_ORIGIN||`http://${req.headers.host}`))return json(403,{error:'Cross-origin request denied'});
+    const account=await auth.session(req.headers.authorization);
+    if(path==='/api/conversations')return json(200,{items:workspace.history(account.userId)});
+    if(req.headers['content-type']!=='application/json')return json(415,{error:'application/json required'});
+    let raw='';for await(const chunk of req){raw+=chunk;if(Buffer.byteLength(raw)>16384)return json(413,{error:'Request too large'});}
+    let input;try{input=JSON.parse(raw);}catch{return json(400,{error:'Invalid JSON'});}
+    return json(200,await workspace.chat(account.userId,input));
+   }catch(e){return json(e.expose===true&&[400,401,403,409,429,503].includes(e.status)?e.status:503,{error:e.expose===true&&[400,401,403,409,429,503].includes(e.status)?e.message:'Investigation unavailable. No result was substituted.'});}
+  }
+  if(path==='/api/wallets'){
+   if(req.method!=='GET')return json(405,{error:'GET required'});
+   try{const account=await auth.session(req.headers.authorization);return json(200,await (deps.walletBalances||walletBalances)(account.wallets));}
+   catch(e){return json([401,403].includes(e.status)?e.status:503,{error:[401,403].includes(e.status)?e.message:'Wallet balances unavailable. Missing data is not zero.'});}
+  }
   if(path==='/api/me') {
    if(req.method!=='GET') return json(405,{error:'GET required'});
    try {return json(200,await auth.session(req.headers.authorization));}
@@ -65,6 +93,7 @@ export function createApp(deps={readPool,readPosition,readHistory,client}) {
    return json(503,{error:'Live data unavailable or stale. No sample data was substituted. Check ETH_RPC_URL and retry.'});
   }
  });
+ server.on('close',()=>workspace.close());
  server.requestTimeout=20000;server.headersTimeout=10000;
  return server;
 }
