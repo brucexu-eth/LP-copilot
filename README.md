@@ -10,15 +10,18 @@ Node.js 20.11+ and npm are required. A maintained Node LTS is recommended.
 
 ```sh
 npm ci --ignore-scripts
+npm run build
 npm start
 # Open http://127.0.0.1:3400
 ```
 
-Optional configuration:
+Optional configuration (never overwrite an existing `.env`):
 
 ```sh
 cp .env.example .env
 # Edit ETH_RPC_URL and optionally GRAPH_API_KEY.
+# Add PRIVY_APP_ID / PRIVY_APP_SECRET for login. Keep .env mode 600.
+# Approve exact PRIVY_ALLOWED_USER_IDS separately before private wallet reads.
 npm run dev
 ```
 
@@ -36,7 +39,8 @@ The default public RPC may be rate-limited. Use your own Ethereum RPC if necessa
 
 - **Uniswap v3:** Ethereum USDC/WETH 0.3% pool [`0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8`](https://etherscan.io/address/0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8). [Contract reads and identity checks](src/data.mjs), [pinned addresses](src/config.mjs), [integer inventory/scenario math](src/math.mjs), [SDK cross-checks](test/math.test.mjs).
 - **The Graph:** optional pinned-block pool history adapter in [src/data.mjs](src/data.mjs). Requires a Studio API key. Missing/invalid/stale data is never replaced by fixtures. Live Graph verification is still pending, so this iteration is **not Graph AI prize-ready**.
-- **AI / LI.FI / execution:** not implemented in iteration 1. The explanations are deterministic educational text, not generated research. There are no transaction endpoints, wallet connections or fake quotes.
+- **Privy authentication foundation:** runtime-configured email login and server-side ES256 access-token validation for the exact app. `/api/me` resolves linked Ethereum wallets from the verified subject; `PRIVY_ALLOWED_USER_IDS` must list the exact operator DID (empty denies private access). No wallet creation, external wallet connection, delegation or signing is enabled.
+- **AI / LI.FI / execution:** not implemented. The explanations remain deterministic educational text, not generated research. There are no transaction endpoints or fake quotes.
 
 Token amounts use integer arithmetic and SDK range sizing; display values and scenarios use floating-point arithmetic and are approximate. No approval or execution should consume these display values. Stored NFT `tokensOwed` does not include all accrued fees and is not presented as a total claimable balance.
 
@@ -49,6 +53,8 @@ SAMPLE_TOKEN_ID=1361432 npm run verify:live
 # While npm start runs in another terminal:
 npx playwright install chromium
 node scripts/verify-browser.mjs
+# Real Privy login-modal smoke test, no email/code submission:
+node --env-file=.env scripts/verify-auth-browser.mjs
 ```
 
 Unit/HTTP tests use explicitly synthetic fixtures; `verify:live` and `verify-browser` use real public RPC data and can fail when the provider is unavailable. Live artifacts are written to ignored `artifacts/` and must be reviewed before sharing. Tests do not send transactions.

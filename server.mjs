@@ -1,11 +1,14 @@
 import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
+import {createAuth} from './src/auth.mjs';
+import {readdir} from 'node:fs/promises';
 import {client,readPool,readPosition,readHistory,validateFresh,validatePositionId} from './src/data.mjs';
 import {analyze,learningPosition} from './src/math.mjs';
 const publicDir=new URL('./public/',import.meta.url);
 const assets=new Map([['/',['index.html','text/html']],['/app.js',['app.js','text/javascript']],['/style.css',['style.css','text/css']]]);
 export function createApp(deps={readPool,readPosition,readHistory,client}) {
+ const auth=deps.auth||createAuth();
  let cached=null,loading=null;
  async function snapshot() {
   if(cached&&Date.now()-cached.at<30000) {validateFresh(cached.state.blockTimestamp);return cached.state;}
@@ -13,11 +16,27 @@ export function createApp(deps={readPool,readPosition,readHistory,client}) {
   return loading;
  }
  const server=createServer(async(req,res)=>{
-  res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
+  res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://auth.privy.io https://api.privy.io; frame-src https://auth.privy.io; img-src 'self' data: https://auth.privy.io; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
   res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('Cache-Control','no-store');
   const json=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(data));};
   const path=new URL(req.url,'http://localhost').pathname;
+  if(req.method==='GET'&&path==='/api/config') return json(200,auth.publicConfig());
+  if(path==='/api/me') {
+   if(req.method!=='GET') return json(405,{error:'GET required'});
+   try {return json(200,await auth.session(req.headers.authorization));}
+   catch(e) {return json([401,403,503].includes(e.status)?e.status:503,{error:[401,403,503].includes(e.status)?e.message:'Authentication unavailable.'});}
+  }
+  if(req.method==='GET'&&path.startsWith('/auth-assets/')) {
+   const name=path.slice('/auth-assets/'.length);
+   if(!/^[a-zA-Z0-9_.-]+\.(js|css)$/.test(name)) return json(404,{error:'Not found'});
+   try {
+    const dir=new URL('./public/auth-assets/',import.meta.url);
+    if(!(await readdir(dir)).includes(name)) return json(404,{error:'Not found'});
+    res.setHeader('Content-Type',name.endsWith('.js')?'text/javascript':'text/css');res.end(await readFile(new URL(name,dir)));return;
+   } catch {return json(404,{error:'Auth assets unavailable. Run npm run build.'});}
+  }
   if(req.method==='GET'&&path==='/api/health') return json(200,{ok:true,mode:'read-only',version:'0.1.0'});
+  if(req.method==='HEAD'&&assets.has(path)) {res.writeHead(200,{'Content-Type':assets.get(path)[1]});res.end();return;}
   if(req.method==='GET'&&assets.has(path)) {
    const [name,type]=assets.get(path);res.setHeader('Content-Type',type+'; charset=utf-8');res.end(await readFile(new URL(name,publicDir)));return;
   }
