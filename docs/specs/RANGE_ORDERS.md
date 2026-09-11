@@ -1,5 +1,7 @@
 # Intent-based LP buy/sell — signature feature candidate
 
+> Archived 2026-09-11: this is a separate product direction and is NOT part of LP Copilot MVP. Retained only for historical provenance. The current PRD supersedes its inclusion.
+
 Status: proposed product/design contract, 2026-09-09; not implemented or enabled by this document. This extends the LP lifecycle, not the authorization boundary. Range orders are an existing protocol primitive; the differentiation to validate is intent translation, transparent execution accounting and withdrawal-aware completion, not invention of a new order type.
 
 ## User promise and examples

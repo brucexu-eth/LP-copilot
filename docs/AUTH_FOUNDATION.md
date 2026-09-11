@@ -15,6 +15,7 @@
 - New full suite: 17 tests passed, including locally signed synthetic JWTs, invalid/expired/wrong-app tokens, unauthorized subject, mismatched upstream user, provider error redaction, HTTP identity substitution and secret/path protection.
 - Vite production build passed. Built assets scanned against the configured app secret: no match.
 - Real Privy authenticated app-settings GET returned success. Configured app ID and production allowed domain matched; email authentication enabled. No settings were changed.
+- Existing RPC-backed learning/import browser regression passed at desktop and mobile: live public NFT loaded, invalid NFT rejected, old results cleared, no page errors or overflow.
 - Real SDK login modal rendered at desktop 1280px and mobile 390px, no uncaught page errors, no failed local asset requests and no horizontal overflow. One desktop Privy analytics request returned 403; mobile run had no upstream failures. No email or verification code was submitted.
 
 ## Not verified / blockers
