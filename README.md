@@ -8,6 +8,10 @@ The current build adds authenticated, durable AI research and user-initiated Pri
 
 An opt-in [Simulation Lab and real-integration TODO checklist](docs/MOCK_HANDOFF.md) now covers synthetic funding, policy confirmation, LP management, worker monitoring, partial failures and restart recovery. Start `npm run dev:mock` and open `http://127.0.0.1:3400/lab`, or use the secret-free startup command in that guide. All balances, authorization, bridges and execution there are **MOCK**; the original authenticated live-research routes are not bypassed. No real execution is enabled.
 
+## Maintainer handoff
+
+See [current implementation, remaining work and acceptance checklist](docs/BRUCE_HANDOFF.md). The current baseline is a research + explicitly mock execution rehearsal, not a live automated LP manager.
+
 ## Run locally
 
 Node.js 20.11+ and npm are required. A maintained Node LTS is recommended.
