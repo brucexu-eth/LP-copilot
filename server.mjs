@@ -5,6 +5,7 @@ import {createAuth} from './src/auth.mjs';
 import {historyFor,historyMode} from './src/history.mjs';
 import {createWorkspace} from './src/workspace.mjs';
 import {simulationService} from './src/simulation-http.mjs';
+import {fundingQuote} from './src/funding.mjs';
 import {walletBalances} from './src/wallets.mjs';
 import {readdir} from 'node:fs/promises';
 import {client,readPool,readPosition,readHistory,validateFresh,validatePositionId} from './src/data.mjs';
@@ -41,15 +42,16 @@ export function createApp(deps={readPool,readPosition,readHistory:historyFor,cli
    try{res.end(await readFile(new URL(file,publicDir)));}catch{json(503,{error:'Simulation assets unavailable'});}return;
   }
   if(req.method==='GET'&&path==='/api/config') return json(200,{...auth.publicConfig(),graphMode,aiConfigured:workspace.configured()});
-  if(['/api/chat','/api/conversations'].includes(path)){
+  if(['/api/chat','/api/conversations','/api/funding-quote'].includes(path)){
    try{
-    if(path==='/api/chat'&&req.method!=='POST'||path==='/api/conversations'&&req.method!=='GET')return json(405,{error:'Method not allowed'});
+    if(['/api/chat','/api/funding-quote'].includes(path)&&req.method!=='POST'||path==='/api/conversations'&&req.method!=='GET')return json(405,{error:'Method not allowed'});
     if(req.headers.origin&&req.headers.origin!==(process.env.APP_ORIGIN||`http://${req.headers.host}`))return json(403,{error:'Cross-origin request denied'});
     const account=await auth.session(req.headers.authorization);
     if(path==='/api/conversations')return json(200,{items:workspace.history(account.userId)});
     if(req.headers['content-type']!=='application/json')return json(415,{error:'application/json required'});
     let raw='';for await(const chunk of req){raw+=chunk;if(Buffer.byteLength(raw)>16384)return json(413,{error:'Request too large'});}
     let input;try{input=JSON.parse(raw);}catch{return json(400,{error:'Invalid JSON'});}
+    if(path==='/api/funding-quote')return json(200,await (deps.fundingQuote||fundingQuote)(account,input));
     return json(200,await workspace.chat(account.userId,input));
    }catch(e){return json(e.expose===true&&[400,401,403,409,429,503].includes(e.status)?e.status:503,{error:e.expose===true&&[400,401,403,409,429,503].includes(e.status)?e.message:'Investigation unavailable. No result was substituted.'});}
   }

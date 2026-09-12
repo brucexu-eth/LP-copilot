@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import {PrivyProvider,usePrivy} from '@privy-io/react-auth';
 import {Research} from './Research.jsx';
 import {Wallets} from './Wallets.jsx';
+import {Funding} from './Funding.jsx';
 
 function Account(){
  const {ready,authenticated,login,logout,getAccessToken,user}=usePrivy();
@@ -26,7 +27,7 @@ function Account(){
  <p>Signed in: {user?.id}</p><button onClick={()=>{setAccount(null);setError('');logout();}}>Sign out</button>
  {error?<p role="alert">{error} <button onClick={()=>setAttempt(x=>x+1)}>Retry account lookup</button></p>:(!account||account.userId!==user?.id)?<p role="status">Verifying account…</p>:<>
  <p>Backend-verified account. {account.wallets.length?'Linked Ethereum wallets:':'No linked Ethereum wallet yet.'}</p>
- <ul>{account.wallets.map(w=><li key={w.walletId||w.address}>{w.address} — {w.clientType||'external'}</li>)}</ul><Wallets key={account.userId+attempt} account={account} getAccessToken={getAccessToken} onChanged={()=>setAttempt(x=>x+1)}/><Research key={account.userId} getAccessToken={getAccessToken}/></>}
+ <ul>{account.wallets.map(w=><li key={w.walletId||w.address}>{w.address} — {w.clientType||'external'}</li>)}</ul><Wallets key={account.userId+attempt} account={account} getAccessToken={getAccessToken} onChanged={()=>setAttempt(x=>x+1)}/><Funding key={'funding-'+account.userId} account={account} getAccessToken={getAccessToken}/><Research key={account.userId} getAccessToken={getAccessToken}/></>}
  </>}
  <p className="muted">Login does not grant transaction authority. Wallet creation requires your explicit click. Funding, signing and delegated management remain disabled.</p></>;
 }
