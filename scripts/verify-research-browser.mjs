@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {chromium} from '@playwright/test';
+import {chromium,expect} from '@playwright/test';
 import {build} from 'esbuild';
 import {generateKeyPair,SignJWT} from 'jose';
 import {mkdtemp,rm} from 'node:fs/promises';
@@ -9,15 +9,18 @@ import {createApp} from '../server.mjs';
 import {createAuth} from '../src/auth.mjs';
 import {createWorkspace} from '../src/workspace.mjs';
 import {openStore} from '../src/store.mjs';
+import {researchPlans} from '../src/research-plans.mjs';
+import {simulationService} from '../src/simulation-http.mjs';
 const {privateKey,publicKey}=await generateKeyPair('ES256');
 const subject='did:privy:browser-test';
 const token=await new SignJWT({sid:'fixture-session'}).setProtectedHeader({alg:'ES256',typ:'JWT'}).setIssuer('privy.io').setAudience('fixture-app').setSubject(subject).setIssuedAt().setExpirationTime('5m').sign(privateKey);
 const auth=createAuth({PRIVY_APP_ID:'fixture-app',PRIVY_APP_SECRET:'fixture-secret',PRIVY_ALLOWED_USER_IDS:subject},{verificationKey:publicKey,getUser:async id=>({id,linked_accounts:[]})});
 const dir=await mkdtemp(join(tmpdir(),'lp-browser-')),path=join(dir,'workspace.sqlite');
-const agent={configured:()=>true,run:async()=>({answer:'Browser fixture answer — HOLD and EXIT differ. Not a live AI response.',evidence:[{history:{status:'mock',synthetic:true}}],syntheticHistory:true,execution:'disabled',model:'TEST FIXTURE'})};
+const fixtureEvidence=[{history:{synthetic:true},result:{position:{kind:'hypothetical'},candidates:[{action:'WIDEN',range:{low:2700,high:3300},explanation:'Fixture range'}]}}];
+const agent={configured:()=>true,run:async()=>({plans:researchPlans(fixtureEvidence),answer:'Browser fixture answer — HOLD and EXIT differ. Not a live AI response.',evidence:fixtureEvidence,syntheticHistory:true,execution:'disabled',model:'TEST FIXTURE'})};
 const code=(await build({stdin:{contents:`import React from 'react';import{createRoot}from'react-dom/client';import{Research}from'./web/Research.jsx';createRoot(document.getElementById('auth-root')).render(<Research getAccessToken={async()=>${JSON.stringify(token)}}/>);`,resolveDir:resolve('.'),loader:'jsx'},bundle:true,write:false,format:'esm',platform:'browser',define:{'process.env.NODE_ENV':'"production"'}})).outputFiles[0].text;
 let server;const browser=await chromium.launch({headless:true});
-async function start(){const workspace=createWorkspace({store:openStore(path),agent});server=createApp({auth,workspace});await new Promise(r=>server.listen(0,'127.0.0.1',r));return `http://127.0.0.1:${server.address().port}`;}
+async function start(){const workspace=createWorkspace({store:openStore(path),agent});server=createApp({auth,workspace,simulation:simulationService({enabled:true,path:join(dir,'sim.sqlite'),interval:100})});await new Promise(r=>server.listen(0,'127.0.0.1',r));return `http://127.0.0.1:${server.address().port}`;}
 async function stop(){await new Promise(r=>server.close(r));server=null;}
 try{
  let url=await start();
@@ -27,6 +30,14 @@ try{
   await page.goto(url);await page.getByLabel('Your question',{exact:true}).fill(`Explain my position ${width}`);await page.getByRole('button',{name:'Ask LP Copilot',exact:true}).click();
   await page.locator('.research-answer').filter({hasText:`Explain my position ${width}`}).getByText('Browser fixture answer',{exact:false}).waitFor();
   await page.reload();await page.locator('.research-answer').filter({hasText:`Explain my position ${width}`}).waitFor();
+  const card=page.locator('.research-answer').filter({hasText:`Explain my position ${width}`});
+  await card.getByText('Rehearse this range here — MOCK only',{exact:true}).click();await card.getByRole('button',{name:'Open / restore local rehearsal',exact:true}).click();
+  await card.getByRole('button',{name:'Add $1,000 synthetic funding',exact:true}).click();await expect(card.getByText('FUND · COMPLETE',{exact:false})).toBeVisible();
+  await card.getByRole('button',{name:'Approve mock policy:',exact:false}).click();
+  await card.getByRole('button',{name:'Save selected range as a new mock draft',exact:true}).click();await expect(card.getByText('MOCK v1 · DRAFT',{exact:false})).toBeVisible();
+  await card.getByRole('button',{name:'Confirm displayed mock version',exact:true}).click();await card.getByRole('button',{name:'Execute confirmed MOCK entry',exact:true}).click();
+  await expect(card.getByText('ENTER · COMPLETE',{exact:false})).toBeVisible();await expect(card.getByText('MOCK cash $198.00 · LP $800.00 · 2700–3300',{exact:true})).toBeVisible();
+  await card.getByRole('button',{name:'Exit mock position',exact:true}).click();await expect(card.getByText('EXIT · COMPLETE',{exact:false})).toBeVisible();
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);console.log(JSON.stringify({width,fixtureChat:'passed',savedAfterReload:true,mockWarning:await page.getByText('MOCK HISTORY',{exact:false}).count(),errors}));await page.close();
  }
  const unauthorized=await fetch(url+'/api/conversations');assert.equal(unauthorized.status,401);

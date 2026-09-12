@@ -1,4 +1,5 @@
 import React,{useEffect,useRef,useState} from 'react';
+import {PlanRehearsal} from './PlanRehearsal.jsx';
 export function Research({getAccessToken}){
  const [question,setQuestion]=useState(''),[items,setItems]=useState([]),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const mounted=useRef(true),controller=useRef(null);
@@ -22,6 +23,7 @@ export function Research({getAccessToken}){
  <div aria-live="polite">{items.map(item=><article className="research-answer" key={item.requestId}><h3>{item.question}</h3><p>{item.state}</p>{item.result&&<>
  {item.result.syntheticHistory&&<p className="callout">MOCK HISTORY — invented development data. Not live market evidence. Execution disabled.</p>}
  <p className="muted">Model: {item.result.model} · Signing disabled</p><div className="research-text">{item.result.answer}</div>
+ {item.result.plans?.length>0&&<section aria-label="Evidence-backed candidates"><h4>Structured comparison candidates</h4><p>Generated from the saved calculation evidence, not inferred from AI prose. These are alternatives for review, not selected recommendations.</p>{item.result.plans.map(plan=><article key={plan.action}><strong>{plan.action} · {plan.status}</strong><p>{plan.range?`Range ${plan.range.low.toFixed(2)}–${plan.range.high.toFixed(2)} USDC/ETH`:'Withdraw into both tokens; not a sale of ETH.'}</p><p>{plan.explanation}</p><p>{plan.syntheticHistory?'MOCK history · ':''}{plan.positionKind} · Evidence #{plan.evidenceIndex+1} · Execution disabled</p><p>{plan.warning}</p>{plan.action==='WIDEN'&&plan.range&&<PlanRehearsal plan={plan}/>}</article>)}</section>}
  <details><summary>Tool evidence and calculations</summary><pre>{JSON.stringify(item.result.evidence,null,2)}</pre></details></>}
  {item.state==='INTERRUPTED'&&<p>Process interruption or timeout. No completed answer was recorded. Submit a new question to retry.</p>}</article>)}</div>
  </section>;
