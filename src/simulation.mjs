@@ -36,11 +36,30 @@ function queue(s,kind,amount=0,automatic=false){
  s.job=job;log(s,'JOB_QUEUED',`${kind}: mock adapter only; no signature or transaction hash`);
 }
 function command(s,input){
- if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(k=>!['requestId','action','amount','price','maxCapital','maxFee','maxDaily','maxSlippageBps','expiresInMinutes','automatic','phase'].includes(k)))throw fail('Unsupported command fields');
+ if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(k=>!['requestId','action','amount','price','maxCapital','maxFee','maxDaily','maxSlippageBps','expiresInMinutes','automatic','phase','lower','upper','reason','version'].includes(k)))throw fail('Unsupported command fields');
  const {action}=input;
- const fields={FUND:['amount'],ENTER:['amount'],INCREASE:['amount'],DECREASE:['amount'],COLLECT:[],EXIT:[],REBALANCE:[],POLICY:['maxCapital','maxFee','maxDaily','maxSlippageBps','expiresInMinutes','automatic'],PAUSE:[],REVOKE:[],RESUME:[],RECOVER:[],PRICE:['price'],ACCRUE:[],FAIL:['phase']};
+ const fields={DRAFT:['amount','lower','upper','reason'],CONFIRM_PLAN:['version'],EXECUTE_PLAN:['version'],FUND:['amount'],ENTER:['amount'],INCREASE:['amount'],DECREASE:['amount'],COLLECT:[],EXIT:[],REBALANCE:[],POLICY:['maxCapital','maxFee','maxDaily','maxSlippageBps','expiresInMinutes','automatic'],PAUSE:[],REVOKE:[],RESUME:[],RECOVER:[],PRICE:['price'],ACCRUE:[],FAIL:['phase']};
  if(typeof action!=='string'||!Object.hasOwn(fields,action)||Object.keys(input).some(k=>!['requestId','action',...fields[action]].includes(k)))throw fail('Unexpected parameters for action');
- if(action==='POLICY'){
+ if(action==='DRAFT'){
+  if(active(s))throw fail('Finish the current job before editing a plan');
+  if(!integer(input.amount,100,1000000)||!integer(input.lower,1,100000)||!integer(input.upper,1,200000)||input.lower>=input.upper||typeof input.reason!=='string'||!input.reason.trim()||input.reason.length>4000)throw fail('Invalid proposal');
+  s.plan={version:(s.plan?.version||0)+1,status:'DRAFT',amount:input.amount,range:{lower:input.lower,upper:input.upper},reason:input.reason.trim(),pool:'ETH/USDC — synthetic USD ledger',source:'USER_NOTE_UNVERIFIED',realExecution:false,createdAt:s.now};
+  log(s,'PLAN_DRAFT',`Version ${s.plan.version}; manual note, not authenticated research evidence`);
+ }else if(['CONFIRM_PLAN','EXECUTE_PLAN'].includes(action)){
+  const p=s.plan;
+  if(!p||p.version!==input.version)throw fail('Plan version changed; review current version');
+  if(action==='CONFIRM_PLAN'){
+   if(p.status!=='DRAFT')throw fail('Only a draft can be confirmed');
+   if(!s.policy||s.policy.status!=='ACTIVE'||s.policy.expiresAt<=s.now)throw fail('Active mock management policy required separately');
+   p.status='CONFIRMED';p.policyVersion=s.policy.version;p.confirmedAt=s.now;
+   log(s,'PLAN_CONFIRMED',`Exact version ${p.version}; mock entry only`);
+  }else{
+   if(p.status!=='CONFIRMED')throw fail('Plan requires fresh confirmation');
+   if(p.policyVersion!==s.policy?.version||s.now-p.confirmedAt>300000)throw fail('Plan confirmation expired or policy changed; create a new draft');
+   queue(s,'ENTER',p.amount);s.job.range={...p.range};s.job.planVersion=p.version;p.status='SUBMITTED';
+   log(s,'PLAN_SUBMITTED',`Version ${p.version} linked to ${s.job.id}`);
+  }
+ }else if(action==='POLICY'){
   if(active(s))throw fail('Recover or finish the job before changing policy');
   if(!integer(input.maxCapital,100,1000000)||!integer(input.maxFee,0,10000)||!integer(input.maxDaily,1,20)||!integer(input.maxSlippageBps,1,500)||!integer(input.expiresInMinutes,1,1440)||typeof input.automatic!=='boolean')throw fail('Invalid simulation policy limits');
   s.policy={status:'ACTIVE',version:++s.policyVersion,maxCapital:input.maxCapital,maxFee:input.maxFee,maxDaily:input.maxDaily,maxSlippageBps:input.maxSlippageBps,expiresAt:s.now+input.expiresInMinutes*60000,automatic:input.automatic,signer:'MOCK — no Privy permission'};log(s,'POLICY_ACTIVE','Simulation-only approval; does not grant real authority');
@@ -77,7 +96,7 @@ function advance(s){
   if(phase==='REMOVE'){s.cash+=s.deployed;s.deployed=0;s.range=null;}
   if(phase==='COLLECT'){s.cash+=s.unclaimed;s.unclaimed=0;}
   if(phase==='DECREASE'){s.cash+=j.amount;s.deployed-=j.amount;}
-  if(['MINT','INCREASE'].includes(phase)){s.cash-=j.amount+j.fee;s.deployed+=j.amount;s.feesSpent+=j.fee;if(phase==='MINT'){s.positionNumber++;s.range={lower:Math.floor(s.price*.9),upper:Math.ceil(s.price*1.1)};}}
+  if(['MINT','INCREASE'].includes(phase)){s.cash-=j.amount+j.fee;s.deployed+=j.amount;s.feesSpent+=j.fee;if(phase==='MINT'){s.positionNumber++;s.range=j.range?{...j.range}:{lower:Math.floor(s.price*.9),upper:Math.ceil(s.price*1.1)};}}
   log(s,'PHASE_COMMITTED',`${j.id} ${phase} — SYNTHETIC; quote/swap/bridge are fixture transitions`);
   j.phase++;j.status=j.phase===j.phases.length?'COMPLETE':'RUNNING';
   if(j.status==='COMPLETE'){if(j.kind!=='FUND')s.dailyCount++;s.lastActionAt=s.now;log(s,'JOB_COMPLETE',j.id);}
