@@ -82,7 +82,8 @@ export function createApp(deps={readPool,readPosition,readHistory:historyFor,cli
     if(path==='/api/terminal/chat'){
      let context=null;
      if(input.wallet&&input.tokenId){
-      const live=await testnet.state(account,input.wallet),position=live.positions.find(p=>p.tokenId===input.tokenId);
+      let live;try{live=await testnet.state(account,input.wallet);}catch(e){if(e.expose)throw e;throw Object.assign(Error('Could not load your position from Base Sepolia for this question. Please retry after refreshing the position.'),{expose:true,status:503});}
+      const position=live.positions.find(p=>p.tokenId===input.tokenId);
       const monitor=management.list(account).find(m=>m.tokenId===input.tokenId&&!m.executionOnly);
       context={chain:'Base Sepolia testnet',price:live.state.price,block:live.state.blockNumber,position:position?{tokenId:position.tokenId,low:position.low,high:position.high,inRange:live.state.tick>=position.tickLower&&live.state.tick<position.tickUpper}:null,monitor:monitor?{status:monitor.status,mode:monitor.mode,execution:monitor.job?.status,lastDecision:monitor.assessments?.[0]?.result,expiresAt:monitor.expiresAt}:null};
      }
