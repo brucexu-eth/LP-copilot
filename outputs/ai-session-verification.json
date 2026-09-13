@@ -1,0 +1,66 @@
+{
+  "chainId": 84532,
+  "sessionId": "fd99fee8-da78-4540-9f1f-79db51e4e0de",
+  "status": "COMPLETED",
+  "trigger": "AI_DEMO",
+  "oldTokenId": "82180",
+  "newTokenId": "82186",
+  "owner": "0xEB22BD75B27F1Ae0557EC67F8b3f064955079102",
+  "range": {
+    "usdc": "2.651732",
+    "weth": "0.001312081330926223",
+    "low": 1768.7506851506641,
+    "high": 2340.2540005137894,
+    "observedTick": 200144,
+    "widthPct": 15,
+    "reserveAllowed": true,
+    "reserveUsdc": "2.151733",
+    "reserveWeth": "0.00106645843221646"
+  },
+  "gasEth": 0.000005472171965556,
+  "allowances": [
+    "0",
+    "0"
+  ],
+  "additionalSigners": 0,
+  "localKeyExists": false,
+  "calls": [
+    {
+      "label": "Remove original liquidity",
+      "status": "confirmed",
+      "hash": "0x53c72075b322a2a2317fe82cb55956a27642f02228b8769845d29aa26d408e44"
+    },
+    {
+      "label": "Collect to owner",
+      "status": "confirmed",
+      "hash": "0x6dfad52825efaacd71be99e8f69fe61afa07c9c155330ee315edca7d2595dc6c"
+    },
+    {
+      "label": "Approve exactly 2.651732 USDC",
+      "status": "confirmed",
+      "hash": "0x4ba93e3aacc0d1ed3bb86679571c7283d3eebfc91f56b523470b494934fc9d42"
+    },
+    {
+      "label": "Approve exactly 0.001312081330926223 WETH",
+      "status": "confirmed",
+      "hash": "0xd1450d9b3110654eca2f4862e723d08a01c9888e9d439e9daa9e2a76f34dc2f0"
+    },
+    {
+      "label": "Mint wider position",
+      "status": "confirmed",
+      "hash": "0x8924d9cda241a7b8c4679fc23c430d344bb9c98c87049dddb929ab63570ef0d3"
+    },
+    {
+      "label": "Clear USDC allowance",
+      "status": "confirmed",
+      "hash": "0xc5a3e09e47d3766791d7f8e7ada3cc19b12d3904218b80712e3a2399b1e2741b"
+    },
+    {
+      "label": "Clear WETH allowance",
+      "status": "confirmed",
+      "hash": "0x85ceb6bbe4030ce163cf8c157a43c86bed5371c748409ecd183c54fbb0593638"
+    }
+  ],
+  "following": true,
+  "verifiedAt": "2026-09-13T14:37:08.099Z"
+}

@@ -53,3 +53,16 @@ test('pausing while a fresh session plan is generated cannot re-enable or queue 
  const m=createManagement({database:db,graph:async()=>graph,judge:async()=>({action:'WIDEN',reason:'range',explanation:'Restore coverage',widthPct:20}),signer:{prepare:async()=>({expiresAt:Date.now()+60000}),verify:async()=>true},testnet:{state:async()=>({network:NETWORK,state,positions:[position]}),repositionPlan:async()=>{if(count++){started();await wait;throw Error('Interrupted');}return plan();}}});
  try{const r=await m.create(account,{wallet,tokenId:'1'});await m.proposal(account,r.id,true);await m.configureSigner(account,r.id);await m.activate(account,r.id,'AI');const checking=m.assess(account,r.id,{force:true});await begun;await m.change(account,r.id,'PAUSE');release();await checking;assert.equal(m.list(account)[0].status,'PAUSED');assert.equal(m.list(account)[0].job.status,'ARMED');}finally{m.close();}
 });
+test('rationale cannot reverse the verified direction of an out-of-range price',async()=>{
+ const {validateDecisionRationale}=await import('../src/management.mjs');const a={currentPrice:2400,scenarios:[{range:{low:1800,high:2200}}]};
+ assert.throws(()=>validateDecisionRationale(a,{explanation:'The hypothetical price is below the current lower bound.'}),/contradicts/);
+ assert.doesNotThrow(()=>validateDecisionRationale(a,{explanation:'The price is above the upper bound; coverage needs review.'}));
+ assert.throws(()=>validateDecisionRationale({...a,currentPrice:1700},{explanation:'The position is above the upper bound.'}),/contradicts/);
+});
+test('completed AI session retires the original key and follows the newly minted NFT without renewing signing',async()=>{
+ const db=new Database(':memory:');let current,retired;
+ const signer={prepare:async(_a,p)=>({scope:{wallet,tokenId:'1',liquidity:'1000000',deadline:p.deadline},expiresAt:p.deadline*1000,keyId:p.id}),verify:async()=>true,bind:createManagedSigner().bind,destroy:id=>retired=id};
+ let count=0;
+ const m=createManagement({database:db,graph:async()=>graph,judge:async()=>({action:'WIDEN',reason:'range',explanation:'Restore coverage',widthPct:20}),signer,testnet:{state:async()=>({network:NETWORK,state,positions:[position,{...position,tokenId:'2'}]}),repositionPlan:async()=>current=plan('plan-'+(++count)),reconcile:async()=>({...current,newTokenId:'2',calls:current.calls.map(c=>({...c,status:'confirmed',gasWei:'1'}))})}});
+ try{const r=await m.create(account,{wallet,tokenId:'1'});await m.proposal(account,r.id,true);await m.configureSigner(account,r.id);await m.activate(account,r.id,'AI');await m.assess(account,r.id,{force:true});await m.advance(account,r.id);const items=m.list(account),ended=items.find(x=>x.id===r.id),follow=items.find(x=>x.tokenId==='2');assert.equal(ended.status,'COMPLETED');assert.equal(retired,'plan-1');assert.equal(follow.status,'WATCHING');assert.equal(follow.mode,'ASSISTED');assert.equal(follow.proposal,undefined);assert.equal(ended.operations,1);}finally{m.close();}
+});

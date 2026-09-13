@@ -4,9 +4,11 @@ An English liquidity terminal with a floating Copilot, live position monitoring 
 
 ## Current flow
 
-Connect with Privy → select the verified USDC/WETH 0.05% pool → set an amount and range → preview exact token amounts → confirm each transaction → manage the owned NFT → remove liquidity and collect tokens.
+Connect with Privy → select the verified USDC/WETH 0.05% pool → set an amount and range → preview exact token amounts → authorize one bounded operation → manage the owned NFT → remove liquidity and collect tokens.
 
-The right-hand panel owns the operation draft. Copilot can update its amount and range or open position actions; it cannot sign. Every manual transaction is simulated, checked against the authenticated wallet and fixed testnet, and confirmed through Privy. The position manager adds persisted one-minute checks, real-position HOLD/WIDEN/EXIT scenarios and bounded AI evaluations. Transaction intents and hashes persist in SQLite. A wallet timeout can be reconciled using a transaction hash, with the sender and full call checked before it is accepted.
+The right sidebar shows the current operation and AI monitoring. Copilot answers questions using the selected position and conversation context, and can update drafts or request monitoring. A bounded AI session can choose a fresh range from changed pool evidence and execute one same-pool rebalance without per-step confirmation. It can use authorized USDC/WETH wallet reserves within the allocation caps; it cannot swap or automatically wrap ETH. After completion, read-only monitoring follows the new NFT and temporary signing access is retired.
+
+The September 13 demo verified **#82180 → #82186**, seven successful transactions, zero remaining token allowances and no remaining temporary signer. The trigger was a real AI decision based on an explicitly hypothetical out-of-range scenario; execution used actual Base Sepolia prices and test tokens. See [the recording guide and current limits](docs/ai-monitoring-demo.md). Transaction intents and receipts persist in SQLite for reconciliation.
 
 Public testnet acceptance completed on 2026-09-12: 15 successful transactions covered wrapping, entry, increase, partial decrease/collection and full exit. NFT 82157 ended with zero liquidity and zero tokens owed; both token allowances were zero. See [testnet acceptance](docs/TESTNET_ACCEPTANCE.md).
 
