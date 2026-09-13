@@ -1,12 +1,13 @@
 // Local fork only. No private keys and no configurable remote execution endpoint.
 import assert from 'node:assert/strict';
 import {createPublicClient,http,encodeFunctionData,parseAbi,parseEventLogs} from 'viem';
+import {mainnet} from 'viem/chains';
 import {readPool,readPosition} from '../src/data.mjs';
 import {buildUnsignedOperation,executionAbi} from '../src/transactions.mjs';
 import {USDC,WETH,POOL,MANAGER} from '../src/config.mjs';
 import {mkdir,writeFile} from 'node:fs/promises';
 const rpc='http://127.0.0.1:18549';
-const c=createPublicClient({transport:http(rpc,{timeout:30000,retryCount:0}),pollingInterval:100});
+const c=createPublicClient({chain:{...mainnet,id:31337,name:'Local Ethereum fork'},transport:http(rpc,{timeout:30000,retryCount:0}),pollingInterval:100});
 const chain=await c.getChainId();assert.equal(chain,31337,'Refuse any non-fork chain');
 const version=await c.request({method:'web3_clientVersion'});assert.match(version,/anvil/i);
 const [wallet]=await c.request({method:'eth_accounts'});assert.ok(wallet);
@@ -14,7 +15,10 @@ const receipts=[];
 async function send(from,to,data,value='0x0'){
  assert.equal(await c.getChainId(),31337);await c.call({account:from,to,data,value:BigInt(value)});
  const hash=await c.request({method:'eth_sendTransaction',params:[{from,to,data,value,gas:'0x989680'}]});
- const receipt=await c.waitForTransactionReceipt({hash,timeout:45000});assert.equal(receipt.status,'success');receipts.push({hash,block:receipt.blockNumber.toString(),gasUsed:receipt.gasUsed.toString()});return receipt;
+ // Poll the submitted hash directly; do not resend after a timeout.
+ const deadline=Date.now()+60000;let receipt;
+ while(Date.now()<deadline){receipt=await c.request({method:'eth_getTransactionReceipt',params:[hash]});if(receipt)break;await new Promise(r=>setTimeout(r,250));}
+ assert.ok(receipt,'Receipt unavailable; reconcile this hash before retrying');assert.equal(receipt.status,'0x1');receipts.push({hash,block:BigInt(receipt.blockNumber).toString(),gasUsed:BigInt(receipt.gasUsed).toString()});return receipt;
 }
 const tokenAbi=parseAbi(['function transfer(address,uint256) returns(bool)','function balanceOf(address) view returns(uint256)','function approve(address,uint256) returns(bool)']);
 // Bootstrap disposable balances by impersonating a contract only inside Anvil.

@@ -1,0 +1,79 @@
+[
+  {
+    "name": "slot0",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "uint160"
+      },
+      {
+        "type": "int24"
+      },
+      {
+        "type": "uint16"
+      },
+      {
+        "type": "uint16"
+      },
+      {
+        "type": "uint16"
+      },
+      {
+        "type": "uint8"
+      },
+      {
+        "type": "bool"
+      }
+    ]
+  },
+  {
+    "name": "liquidity",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      {
+        "type": "uint128"
+      }
+    ]
+  },
+  {
+    "name": "Swap",
+    "type": "event",
+    "inputs": [
+      {
+        "type": "address",
+        "name": "sender",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "recipient",
+        "indexed": true
+      },
+      {
+        "type": "int256",
+        "name": "amount0"
+      },
+      {
+        "type": "int256",
+        "name": "amount1"
+      },
+      {
+        "type": "uint160",
+        "name": "sqrtPriceX96"
+      },
+      {
+        "type": "uint128",
+        "name": "liquidity"
+      },
+      {
+        "type": "int24",
+        "name": "tick"
+      }
+    ],
+    "anonymous": false
+  }
+]

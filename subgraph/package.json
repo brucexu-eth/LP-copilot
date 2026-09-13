@@ -1,0 +1,1 @@
+{"name":"lp-copilot-pool-indexer","private":true,"scripts":{"codegen":"graph codegen","build":"graph build","deploy":"graph deploy lp-copilot-base-sepolia --node https://api.studio.thegraph.com/deploy/ --version-label v0.1.0"},"devDependencies":{"@graphprotocol/graph-cli":"0.98.1","@graphprotocol/graph-ts":"0.38.2"}}

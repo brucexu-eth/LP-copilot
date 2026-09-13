@@ -17,8 +17,8 @@ const token=await new SignJWT({sid:'fixture-session'}).setProtectedHeader({alg:'
 const auth=createAuth({PRIVY_APP_ID:'fixture-app',PRIVY_APP_SECRET:'fixture-secret',PRIVY_ALLOWED_USER_IDS:subject},{verificationKey:publicKey,getUser:async id=>({id,linked_accounts:[]})});
 const dir=await mkdtemp(join(tmpdir(),'lp-browser-')),path=join(dir,'workspace.sqlite');
 const fixtureEvidence=[{history:{synthetic:true},result:{position:{kind:'hypothetical'},candidates:[{action:'WIDEN',range:{low:2700,high:3300},explanation:'Fixture range'}]}}];
-const agent={configured:()=>true,run:async()=>({plans:researchPlans(fixtureEvidence),answer:'Browser fixture answer — HOLD and EXIT differ. Not a live AI response.',evidence:fixtureEvidence,syntheticHistory:true,execution:'disabled',model:'TEST FIXTURE'})};
-const code=(await build({stdin:{contents:`import React from 'react';import{createRoot}from'react-dom/client';import{Research}from'./web/Research.jsx';createRoot(document.getElementById('auth-root')).render(<Research getAccessToken={async()=>${JSON.stringify(token)}}/>);`,resolveDir:resolve('.'),loader:'jsx'},bundle:true,write:false,format:'esm',platform:'browser',define:{'process.env.NODE_ENV':'"production"'}})).outputFiles[0].text;
+const agent={configured:()=>true,run:async()=>({plans:researchPlans(fixtureEvidence),reportVersion:1,answer:'Browser fixture answer — HOLD and EXIT differ. Not a live AI response.',evidence:fixtureEvidence,syntheticHistory:true,execution:'disabled',model:'TEST FIXTURE'})};
+const code=(await build({stdin:{contents:`import React from 'react';import{createRoot}from'react-dom/client';import{Research}from'./web/Research.jsx';createRoot(document.getElementById('auth-root')).render(<Research simulationEnabled={true} getAccessToken={async()=>${JSON.stringify(token)}}/>);`,resolveDir:resolve('.'),loader:'jsx'},bundle:true,write:false,format:'esm',platform:'browser',define:{'process.env.NODE_ENV':'"production"'}})).outputFiles[0].text;
 let server;const browser=await chromium.launch({headless:true});
 async function start(){const workspace=createWorkspace({store:openStore(path),agent});server=createApp({auth,workspace,simulation:simulationService({enabled:true,path:join(dir,'sim.sqlite'),interval:100})});await new Promise(r=>server.listen(0,'127.0.0.1',r));return `http://127.0.0.1:${server.address().port}`;}
 async function stop(){await new Promise(r=>server.close(r));server=null;}
@@ -27,8 +27,8 @@ try{
  for(const width of [1280,390]){
   const page=await browser.newPage({viewport:{width,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.route('**/auth-assets/login.js',route=>route.fulfill({contentType:'text/javascript',body:code}));
-  await page.goto(url);await page.getByLabel('Your question',{exact:true}).fill(`Explain my position ${width}`);await page.getByRole('button',{name:'Ask LP Copilot',exact:true}).click();
-  await page.locator('.research-answer').filter({hasText:`Explain my position ${width}`}).getByText('Browser fixture answer',{exact:false}).waitFor();
+  await page.goto(url);await page.getByLabel('Your question',{exact:true}).fill(`Explain my position ${width}`);await page.getByRole('button',{name:/^Ask LP Copilot/}).click();
+  await page.locator('.research-answer').filter({hasText:`Explain my position ${width}`}).getByText('Read the analysis',{exact:false}).click();await page.locator('.research-answer').filter({hasText:`Explain my position ${width}`}).getByText('Browser fixture answer',{exact:false}).waitFor();
   await page.reload();await page.locator('.research-answer').filter({hasText:`Explain my position ${width}`}).waitFor();
   const card=page.locator('.research-answer').filter({hasText:`Explain my position ${width}`});
   await card.getByText('Rehearse this range here — MOCK only',{exact:true}).click();await card.getByRole('button',{name:'Open / restore local rehearsal',exact:true}).click();

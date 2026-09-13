@@ -1,0 +1,18 @@
+type PoolState @entity(immutable: false) {
+  id: ID!
+  chainId: Int!
+  pool: Bytes!
+  fee: Int!
+  sqrtPriceX96: BigInt!
+  tick: Int!
+  liquidity: BigInt!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+}
+type Swap @entity(immutable: true) {
+  id: Bytes!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  amount0: BigInt!
+  amount1: BigInt!
+}

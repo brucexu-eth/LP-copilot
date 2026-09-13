@@ -7,3 +7,5 @@ data/
 artifacts/
 coverage/
 .DS_Store
+subgraph/generated/
+subgraph/build/

@@ -1,0 +1,59 @@
+{
+  "chainId": 84532,
+  "source": "DEMO_OPERATOR; AI evaluated hypothetical coverage but returned HOLD",
+  "mandateId": "32a5721e-6ed9-44fa-990c-bb831db0933a",
+  "planId": "9a67c109-d1b2-405f-8a3f-a2ab00bc9916",
+  "newTokenId": "82184",
+  "owner": "0xEB22BD75B27F1Ae0557EC67F8b3f064955079102",
+  "range": {
+    "usdc": "4.940344",
+    "weth": "0.002443947842168229",
+    "low": 1759.9294442584949,
+    "high": 2351.9839845507877
+  },
+  "gasEth": 0.000005462795747372,
+  "allowances": [
+    "0",
+    "0"
+  ],
+  "additionalSigners": 0,
+  "localKeyExists": false,
+  "signerRemovedAt": 1789306793223,
+  "calls": [
+    {
+      "label": "Remove original liquidity",
+      "status": "confirmed",
+      "hash": "0x6194dea4b813356ec0f3c7b8cf1d177e366ec888cd019d634d9e3fde89f00028"
+    },
+    {
+      "label": "Collect to owner",
+      "status": "confirmed",
+      "hash": "0xb84cf33a39a6832eefc319b65e906a7097b63b564801875b354896479c95ccff"
+    },
+    {
+      "label": "Approve exactly 4.940344 USDC",
+      "status": "confirmed",
+      "hash": "0x5e7de8530412d14b0c8bad67bf0cd91fe0a70419033ea7a95dcf25a804566585"
+    },
+    {
+      "label": "Approve exactly 0.002443947842168229 WETH",
+      "status": "confirmed",
+      "hash": "0xa238c7d1f5e9bf8be5feb5a4c82471c8464dce93b5fec22d8752bab7ba24d97b"
+    },
+    {
+      "label": "Mint wider position",
+      "status": "confirmed",
+      "hash": "0x364d377ec943576f482bd3ef2180e77b753b4af212b9a80b51bacef357b024d1"
+    },
+    {
+      "label": "Clear USDC allowance",
+      "status": "confirmed",
+      "hash": "0xc7fd1b091c2f590ffe3d81b424a71b52c90409649e387ce2cc4fde1374c94932"
+    },
+    {
+      "label": "Clear WETH allowance",
+      "status": "confirmed",
+      "hash": "0x84bffbc765727558e7e1076891c9744dd3c927a9cc2b60a280622ff25c3e0024"
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import {researchReport} from './research-report.mjs';
 import {openStore} from './store.mjs';
 import {createAgent} from './agent.mjs';
 import {resolve} from 'node:path';
@@ -6,7 +7,11 @@ export function createWorkspace({env=process.env,compare,store,agent}={}){
  const getStore=()=>db??=openStore(resolve(env.LP_DATA_DIR||'./data','workspace.sqlite'));
  return {
   configured:()=>model.configured(),
-  history:(userId)=>getStore().history(userId),
+  history:(userId)=>getStore().history(userId).map(item=>{
+   if(item.result?.reportVersion!==1||!item.result.selection)return item;
+   try{return {...item,result:{...item.result,answer:researchReport(item.result.evidence,item.result.selection),reportLanguage:'en'}};}
+   catch{return {...item,result:{...item.result,reportVersion:0}};}
+  }),
   async chat(userId,input){
    if(!input||Object.keys(input).sort().join(',')!=='question,requestId'||typeof input.question!=='string'||!input.question.trim()||input.question.length>4000||typeof input.requestId!=='string')throw Object.assign(Error('Provide question and requestId only.'),{status:400,expose:true});
    if(!model.configured())throw Object.assign(Error('DeepSeek is not configured. No mock AI answer was substituted.'),{status:503,expose:true});

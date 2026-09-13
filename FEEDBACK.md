@@ -1,15 +1,19 @@
-# Uniswap developer feedback — iteration 1
+# Uniswap integration feedback
 
-Status: local development observations; feedback form not submitted.
+## Integration exercised
 
-## Integration
-Ethereum Uniswap v3 USDC/WETH 0.3% pool and NonfungiblePositionManager, read at a pinned block. The pool is checked against the factory, fee, token addresses and decimals. Deterministic BigInt inventory math is cross-checked against the SDK. See `src/data.mjs`, `src/config.mjs`, `src/math.mjs` and `test/math.test.mjs`.
+LP Copilot uses Uniswap v3 on Base Sepolia (84532), the deployed nonfungible position manager and the SDK for position amounts and range scenarios. The public testnet flow covers minting, increasing liquidity, decreasing liquidity, collecting tokens and clearing exact ERC-20 allowances. The terminal verifies factory, pool, tokens, fee tier and tick spacing before preparing calls.
 
-## Observations from implementation
-- The official Ethereum deployments page includes the selected example pool and manager address, making identity verification straightforward.
-- The current SDK package exposes an ESM entry that does not load directly with Node 20.11 in this setup. Using Node `createRequire` loads the package's CommonJS export without patching upstream code.
-- The SDK dependency tree brings in unrelated contract tooling and security advisories. A minimal math-only distribution would reduce the footprint of a read-only educational app.
-- The distinction between stored `tokensOwed` and total currently claimable fees is important for new LP integrators; the UI explicitly excludes fees rather than mislabeling the stored values.
-- The subgraph overview documents example deployments and warns that schema, indexing and maintenance must be verified. The adapter consequently fails closed on inconsistent metadata.
+## Observed developer experience
 
-No claims are made about transaction execution UX because this iteration does not execute transactions. Submit the official feedback form only after human review and public release.
+- SDK position calculations made it practical to derive the paired-token amount and compare inventory across hypothetical prices without presenting fabricated APR.
+- Separating decreaseLiquidity from collect needs explicit UI treatment. Removing liquidity does not itself deliver all tokens to the wallet.
+- Integer rounding and checkpointed tokens owed need clear labels; neither should be advertised as profit or complete claimable fees.
+- Receipt reconciliation should validate the full transaction, since a wallet can time out after a transaction has mined. This happened in our public testnet run.
+- A realistic testnet pool and documented test-token addresses improve onboarding substantially. Thin testnet liquidity and test-chain prices must remain visibly distinct from market data.
+
+## Suggested documentation additions
+
+A frontend example that covers exact approvals, residual approval cleanup, interrupted wallet sessions and multi-step receipt recovery would help builders move beyond a single successful mint demo. A testnet troubleshooting guide should distinguish factory/pool deployment, token funding, range selection and wallet-session failures.
+
+The wallet authentication interruption observed during testing came from Privy; it is not attributed to a Uniswap contract failure. This feedback file is prepared for review. The external hackathon feedback form has not been submitted.

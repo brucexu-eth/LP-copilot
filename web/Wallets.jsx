@@ -7,8 +7,8 @@ export function Wallets({account,getAccessToken,onChanged}){
   if(!window.confirm('Create your own Ethereum embedded wallet in Privy? This does not add an app signer, fund the wallet or authorize transactions.'))return;
   setBusy(true);setError('');try{await createWallet({createAdditional:false,signers:[]});onChanged();}catch{setError('Wallet creation not confirmed. Refresh your account before retrying.');}finally{setBusy(false);}
  }
- return <section aria-label="Wallet balances"><h3>Ethereum wallets</h3>{error&&<p role="alert">{error}</p>}
+ return <section aria-label="Wallet balances" className="wallet-workspace"><p className="eyebrow">YOUR WALLET</p><h2>Connected. Always yours.</h2><p className="muted">Ethereum mainnet balances, verified through RPC. No signing authority is granted.</p>{error&&<p className="callout" role="alert">{error}</p>}
  {!account.wallets.some(w=>w.clientType==='privy')&&<button disabled={busy} onClick={create}>{busy?'Creating wallet…':'Create my Privy wallet'}</button>}
- {data?<><p>RPC block {data.blockNumber} · No signing authority granted</p><ul>{data.wallets.map(w=><li key={w.walletId||w.address}><strong>{w.address}</strong><p>{w.balances.ETH} ETH · {w.balances.USDC} USDC · {w.balances.WETH} WETH</p></li>)}</ul></>:<p>Wallet balances have not been verified yet.</p>}
+ {data?<>{data.wallets.map(w=><article className="wallet-card" key={w.walletId||w.address}><div className="wallet-card-top"><span className="wallet-address">{w.address.slice(0,8)}…{w.address.slice(-6)}</span><span className="badge">{w.clientType==='privy'?'PRIVY WALLET':'ETHEREUM WALLET'}</span></div><div className="balance-grid">{['ETH','USDC','WETH'].map(t=><div key={t}><small>{t}</small><strong>{Number(w.balances[t]).toLocaleString('en-US',{maximumFractionDigits:6})}</strong></div>)}</div><details><summary>Wallet address & verification</summary><p>{w.address}</p><p>RPC block {data.blockNumber}</p></details></article>)}{!data.wallets.length&&<p className="muted">Create a wallet to see your balances here.</p>}</>:<p role="status" className="muted">Verifying wallet balances…</p>}
  </section>;
 }

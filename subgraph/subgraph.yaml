@@ -1,0 +1,27 @@
+specVersion: 1.0.0
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Pool
+    network: base-sepolia
+    source:
+      address: "0x94bfc0574FF48E92cE43d495376C477B1d0EEeC0"
+      abi: Pool
+      startBlock: 46713000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - PoolState
+        - Swap
+      abis:
+        - name: Pool
+          file: ./abis/Pool.json
+      blockHandlers:
+        - handler: handleBlock
+      eventHandlers:
+        - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24)
+          handler: handleSwap
+      file: ./src/mapping.ts

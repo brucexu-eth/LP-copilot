@@ -6,7 +6,7 @@ export function createAuth(env=process.env,adapters={}) {
  const configured=Boolean(appId&&env.PRIVY_APP_SECRET);
  const allowed=new Set((env.PRIVY_ALLOWED_USER_IDS||'').split(',').map(x=>x.trim()).filter(Boolean));
  let client;
- const sdk=()=>client??=new PrivyClient({appId,appSecret:env.PRIVY_APP_SECRET,timeout:10000,maxRetries:0});
+ const sdk=()=>client??=new PrivyClient({appId,appSecret:env.PRIVY_APP_SECRET,timeout:10000,maxRetries:1});
  return {
   publicConfig:()=>({privyAppId:configured?appId:null,execution:'disabled',operatorAccessConfigured:allowed.size>0}),
   async session(authorization) {

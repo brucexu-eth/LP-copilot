@@ -37,7 +37,7 @@ export async function readPosition(id,state,c=client()) {
 export function validateGraph(data,state,now=Math.floor(Date.now()/1000)) {
  if(!data?._meta?.block || data._meta.hasIndexingErrors!==false) throw new Error('Graph indexing metadata unavailable or indexing errors present.');
  const meta=data._meta.block, lag=Number(state.blockNumber)-meta.number;
- if(!Number.isSafeInteger(meta.number)||lag<0||lag>MAX_GRAPH_LAG||!meta.hash||!same(meta.hash,state.blockHash)) throw new Error('Graph block is missing, stale or inconsistent with RPC.');
+ if(!Number.isSafeInteger(meta.number)||lag!==0||(meta.hash!==null&&meta.hash!==undefined&&!same(meta.hash,state.blockHash))) throw new Error('Graph block is missing, stale or inconsistent with RPC.');
  const p=data.pool;
  if(!p||!same(p.id,POOL)||!same(p.token0?.id,USDC)||!same(p.token1?.id,WETH)||Number(p.feeTier)!==FEE||p.sqrtPrice!==state.sqrtPriceX96||Number(p.tick)!==state.tick) throw new Error('Graph pool identity or price disagrees with RPC at the pinned block.');
  const rows=data.poolDayDatas;
@@ -48,13 +48,13 @@ export function validateGraph(data,state,now=Math.floor(Date.now()/1000)) {
   last=row.date;
  }
  if(now-rows[0].date>2*86400) throw new Error('Graph history is stale.');
- return {status:'verified',source:'The Graph',blockNumber:meta.number,lagBlocks:lag,days:rows,observedAt:new Date().toISOString(),note:'Pool-level historical metrics, including the current partial UTC day. Not your fees or future yield.'};
+ return {status:'verified',source:'The Graph',blockNumber:meta.number,lagBlocks:lag,graphHashVerified:Boolean(meta.hash),executionEligible:Boolean(meta.hash),verification:meta.hash?'block-hash-and-pool-state':'pinned-block-number-and-pool-state',days:rows,observedAt:new Date().toISOString(),note:'Pool-level historical metrics, including the current partial UTC day. Not your fees or future yield.'};
 }
 export async function readHistory(state,fetcher=fetch) {
  const key=process.env.GRAPH_API_KEY;
  if(!key) return {status:'not_configured',source:'The Graph',message:'GRAPH_API_KEY is not configured. No Graph history or Graph prize readiness is claimed.'};
  try {
-  const response=await fetcher(`https://gateway.thegraph.com/api/${encodeURIComponent(key)}/subgraphs/id/${SUBGRAPH}`,{method:'POST',headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(15000),body:JSON.stringify({query:`query History($pool: ID!, $block: Int!) { _meta(block: {number: $block}) { block { number hash } hasIndexingErrors } pool(id: $pool, block: {number: $block}) { id token0 {id} token1 {id} feeTier sqrtPrice tick } poolDayDatas(first: 7, orderBy: date, orderDirection: desc, where: {pool: $pool}, block: {number: $block}) { date volumeUSD tvlUSD feesUSD } }`,variables:{pool:POOL,block:Number(state.blockNumber)}})});
+  const response=await fetcher(`https://gateway.thegraph.com/api/subgraphs/id/${SUBGRAPH}`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${key}`},signal:AbortSignal.timeout(15000),body:JSON.stringify({query:`query History($pool: ID!, $block: Int!) { _meta(block: {number: $block}) { block { number hash } hasIndexingErrors } pool(id: $pool, block: {number: $block}) { id token0 {id} token1 {id} feeTier sqrtPrice tick } poolDayDatas(first: 7, orderBy: date, orderDirection: desc, where: {pool: $pool}, block: {number: $block}) { date volumeUSD tvlUSD feesUSD } }`,variables:{pool:POOL,block:Number(state.blockNumber)}})});
   if(!response.ok) throw new Error('Graph HTTP error');
   const body=await response.json();
   if(body.errors?.length) throw new Error('Graph query failed, possibly not yet indexed to the requested block.');
