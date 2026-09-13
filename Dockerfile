@@ -9,6 +9,7 @@ RUN npm run build && npm prune --omit=dev --ignore-scripts
 FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=3400 LP_DATA_DIR=/app/data ENABLE_SIMULATION_LAB=0
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 COPY --from=build --chown=node:node /app/package.json ./package.json
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/public ./public
