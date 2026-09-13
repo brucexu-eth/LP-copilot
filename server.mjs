@@ -6,6 +6,7 @@ import {terminalChat} from './src/terminal-chat.mjs';
 import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
+import {hostingConfig,allowedOrigin} from './src/hosting.mjs';
 import {createAuth} from './src/auth.mjs';
 import {historyFor,historyMode} from './src/history.mjs';
 import {createWorkspace} from './src/workspace.mjs';
@@ -18,6 +19,7 @@ import {analyze,learningPosition} from './src/math.mjs';
 const publicDir=new URL('./public/',import.meta.url);
 const assets=new Map([['/graph-setup.html',['graph-setup.html','text/html']],['/',['index.html','text/html']],['/app.js',['app.js','text/javascript']],['/style.css',['style.css','text/css']]]);
 export function createApp(deps={readPool,readPosition,readHistory:historyFor,client}) {
+ const {origin}=hostingConfig();
  const testnet=deps.testnet||createTestnet();
  const performance=createPositionPerformance({testnet});
  const catalog=deps.catalog||createPoolCatalog();
@@ -46,7 +48,7 @@ export function createApp(deps={readPool,readPosition,readHistory:historyFor,cli
   if(path.startsWith('/api/terminal/')){
    try{
     if(!['GET','POST'].includes(req.method))return json(405,{error:'Method not allowed'});
-    if(req.headers.origin&&req.headers.origin!==`http://${req.headers.host}`)return json(403,{error:'Cross-origin request denied'});
+    if(!allowedOrigin(req,origin))return json(403,{error:'Cross-origin request denied'});
     if(req.method==='GET'&&path==='/api/terminal/pools')return json(200,await catalog.discover());
     const account=await auth.session(req.headers.authorization);
     if(req.method==='GET'&&path==='/api/terminal/management/list')return json(200,{items:management.list(account)});
@@ -100,7 +102,7 @@ export function createApp(deps={readPool,readPosition,readHistory:historyFor,cli
   if(['/api/chat','/api/conversations','/api/funding-quote'].includes(path)){
    try{
     if(['/api/chat','/api/funding-quote'].includes(path)&&req.method!=='POST'||path==='/api/conversations'&&req.method!=='GET')return json(405,{error:'Method not allowed'});
-    if(req.headers.origin&&req.headers.origin!==(process.env.APP_ORIGIN||`http://${req.headers.host}`))return json(403,{error:'Cross-origin request denied'});
+    if(!allowedOrigin(req,origin))return json(403,{error:'Cross-origin request denied'});
     const account=await auth.session(req.headers.authorization);
     if(path==='/api/conversations')return json(200,{items:workspace.history(account.userId)});
     if(req.headers['content-type']!=='application/json')return json(415,{error:'application/json required'});
@@ -136,7 +138,7 @@ export function createApp(deps={readPool,readPosition,readHistory:historyFor,cli
   }
   if(path!=='/api/analyze') return json(404,{error:'Not found'});
   if(req.method!=='POST') return json(405,{error:'POST required'});
-  if(req.headers.origin&&req.headers.origin!==`http://${req.headers.host}`) return json(403,{error:'Cross-origin request denied'});
+  if(!allowedOrigin(req,origin)) return json(403,{error:'Cross-origin request denied'});
   if(req.headers['content-type']!=='application/json') return json(415,{error:'application/json required'});
   let body='';
   try {
@@ -165,7 +167,6 @@ export function createApp(deps={readPool,readPosition,readHistory:historyFor,cli
  return server;
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)) {
- const host=process.env.HOST||'127.0.0.1',port=Number(process.env.PORT||3400);
- if(!['127.0.0.1','localhost','::1'].includes(host)) throw new Error('This development MVP binds to loopback only. Public hosting needs a separate security review.');
+ const {host,port}=hostingConfig();
  createApp().listen(port,host,()=>console.log(`LP Copilot Base Sepolia terminal: http://${host}:${port}`));
 }

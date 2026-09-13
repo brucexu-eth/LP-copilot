@@ -42,4 +42,4 @@ The acceptance script is read-only and checks this checkout's recorded test run 
 - The opt-in `/lab` remains a separate, clearly synthetic simulation. Start it with `npm run dev:mock`; it does not prove real execution.
 - [PRD](docs/PRD.md) describes the larger managed LP target. Earlier handoff documents are historical; [testnet acceptance](docs/TESTNET_ACCEPTANCE.md) describes the current terminal.
 
-The local server binds to loopback. This is a development testnet build, not a production deployment. Remaining dependency advisories and production security review are separate work.
+The local server defaults to loopback. An explicitly enabled, operator-restricted Docker deployment is documented in [Coolify deployment](docs/DEPLOYMENT.md). This is a testnet build; remaining dependency advisories and production security review are separate work.

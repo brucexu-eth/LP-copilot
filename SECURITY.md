@@ -1,17 +1,24 @@
-# Development security boundary
+# Testnet security boundary
 
-This iteration is a local, read-only learning tool. It has no wallet signing, transaction sending, token approvals, user accounts or database. It must not be used to construct financial transactions from floating-point display numbers.
+LP Copilot executes only on Base Sepolia. Manual transactions require the
+ authenticated owner. Delegated execution requires a reviewed bounded plan and
+an owner-attached Privy signer; the chat model cannot sign.
 
-- Bind to loopback only. No public deployment is configured.
-- Browser clients cannot select RPC URLs, contracts, chains or Graph endpoints.
-- Provider credentials remain server-side. Provider error text is not returned to clients.
-- Remote text is rendered with textContent, never injected as HTML.
-- Snapshot freshness, pool identity and NFT pool membership are verified; data absence is an error, not a fixture fallback.
-- Browser input changes clear old results and cancel/ignore stale requests.
-- Install dependencies with `--ignore-scripts`.
+- Local startup defaults to loopback. Hosted startup requires explicit activation,
+  HTTPS origin configuration, Privy credentials, an operator allowlist, and a
+  disabled simulation lab. The proxy terminates TLS; the container port stays private.
+- API requests retain authentication and exact origin checks. Forwarded headers
+  do not select a trusted origin. Missing credentials or allowlist fail closed.
+- Secrets stay in runtime configuration. Local databases, signer material and
+  environment files are excluded from the container build context.
+- Privy enforces chain, token amounts, recipient and expiry. The server separately
+  pins full calldata, including fee and ticks. See
+  [management readiness](docs/MANAGEMENT_READINESS.md) for the policy limitation.
+- Run one instance with persistent `/app/data`. Do not overlap workers during
+  deployment or copy active signer keys from a developer machine.
 
-## Known dependency limitations
+On 2026-09-13, the runtime dependency audit reported 0 high/critical, 28 moderate
+and 11 low advisories. SDK dependency findings remain under review; no production
+security certification is implied. Do not blindly force dependency downgrades.
 
-The initial npm audit reports advisories in the Uniswap SDK's transitive contract-tooling/signing dependency tree, including high-severity advisories. A non-forced `npm audit fix` did not resolve them. The application does not invoke compiler, ZIP extraction, filesystem helper, websocket, signer or contract-deployment paths from that tree. This is not a blanket claim that dependencies are secure. Do not expose this app publicly or add transaction execution until the dependency surface is reduced or reviewed. Avoid blindly applying `npm audit fix --force`, which proposes a materially older SDK.
-
-Public release requires another secret/privacy review, an approved open-source license and resolution of relevant dependency risks. Do not put private keys, credential-bearing RPC URLs, private discussions or unrelated organizational material in issues or artifacts.
+See [deployment instructions](docs/DEPLOYMENT.md). Mainnet execution is unsupported.

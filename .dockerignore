@@ -1,0 +1,11 @@
+.git
+.env
+.env.*
+node_modules
+data
+artifacts
+outputs
+coverage
+public/auth-assets
+subgraph
+.DS_Store
