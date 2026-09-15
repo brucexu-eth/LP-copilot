@@ -1,40 +1,144 @@
-# LP Copilot — managed LP MVP
+# LP Copilot vNext — AI-native Uniswap position intelligence
 
-Updated 2026-09-11. Canonical development contract; Notion is a Chinese reading projection. This revision supersedes the previous product-wide read-only and per-transaction-only authorization requirements. It does not enable live wallet authority by itself.
+Updated 2026-09-15. Canonical product contract; Notion is the Chinese reading projection.
 
-## Outcome
-A conversational LP management agent: investigate real The Graph/Uniswap data, understand user objectives, build a Uniswap position through a user-owned Privy wallet, and monitor/manage it within an explicitly approved, revocable policy. LI.FI supplies cross-chain funding and required ratio swaps. DeepSeek Flash investigates and proposes; deterministic tools calculate and policy-bound execution signs. Explanation is observability, not the whole product.
+## Product decision
 
-## Bounded scope
-- A curated set of established Uniswap v3 pools; one managed position per strategy. Stablecoin pairs have depeg/issuer risk; WETH pairs retain ETH price risk. No pool is described as safe or guaranteed profitable.
-- Investigate Robinhood first. Ethereum mainnet fallback is explicitly authorized if the required Robinhood Graph path is unavailable. Never relabel one network's evidence as another's. No required PONS or meme exposure.
-- Candidate Ethereum assets: USDC/USDT and USDC/WETH. Freeze addresses, fee tiers, token ordering, decimals and data coverage from live factory/RPC/Graph evidence before use.
-- Entry, reduction, withdrawal, collection and same-pool repositioning. LI.FI funding/ratio exchange only where needed. No automatic cross-chain or cross-pool rotation.
-- Excluded: single-sided range orders (separate product), arbitrary token discovery, leverage, perpetual hedges, social-signal platform, custom hooks, Arc integration.
+Restart the product around an **AI-native Uniswap experience**, rather than incrementally extending the hackathon terminal. The September hackathon implementation is legacy evidence and may be reused selectively, but its architecture, testnet flow, release constraints and UI do not define vNext.
 
-## User flow
-1. Create/use a user-owned Privy embedded wallet. An external funding wallet is not automatically delegated.
-2. Select a verified pool, discuss objectives, inspect real evidence and deterministic inventory scenarios.
-3. Review a versioned entry plan and management policy. Missing risk preferences require clarification.
-4. Fund through a confirmed LI.FI route if needed; reconcile destination funds before entry.
-5. Create the LP position; reconcile receipt, tokenId, ownership, pool, liquidity and residual inventory.
-6. Opt into assisted or delegated management. A durable scheduler refreshes data; material changes trigger bounded AI investigation and deterministic policy evaluation.
-7. Execute only within current authority; reconcile each step. Expose pause, revoke, manual recovery and withdrawal controls.
+LP Copilot vNext follows the familiar Uniswap mental model and information architecture, then adds the missing decision layer: historical analog replay, scenario simulation, range and action comparison, continuous monitoring, and policy-bounded execution. It must help a user decide what to do with a concrete LP position; it must not present uncertain forecasts as an “optimal” answer or promise profit.
 
-## Authorization contract
-Assisted mode requires action-specific approval. Delegated mode permits capital-changing actions only within a user-approved versioned mandate and a matching Privy signer policy. The user remains owner; the application is a restricted signer. Never allow an unconstrained signer or give keys to the model.
+This document authorizes product definition only. It does not authorize mainnet capital movement, signer-policy changes, deployment, or unattended trading.
 
-Bind mandate to authenticated user, wallet, chain, pool, position, permitted actions, capital cap, max slippage, transaction/cumulative cost limits, cooldown, operation limit, expiry and fixed recipient. No automatic capital top-up, new pool, authority expansion or parameter relaxation. Proposals modifying risk limits require fresh approval. Revocation blocks future submissions, but cannot cancel already broadcast transactions or undo existing ERC20 allowances; show these separately.
+## User problem
 
-Privy key-level controls restrict chain/target/method/decoded parameters/recipient/expiry where supported. Application controls enforce economic and stateful constraints. A router or multicall allowlist alone is insufficient. Unsupported enforceable policy is a blocker, never an allow-all fallback. User product approval is not approval to move actual funds: wallet, amount, pool, ranges, allowances and limits must be approved before live activation.
+A concentrated-liquidity provider must repeatedly answer questions that the standard swap/liquidity interface does not resolve:
 
-## Signals and calculations
-Graph supplies indexed historical pool data; RPC supplies current state, ownership, balances and receipts. Verify Graph metadata, schema, chain/deployment and freshness; cross-check pool state at the Graph block. Unavailable data is not zero. Stale Graph cannot authorize a trade even if RPC is available.
+- Which range is appropriate for this asset, market regime, holding period and risk budget?
+- If price approaches or crosses a boundary, should the user hold, widen, recenter, reduce, withdraw, or exit into a chosen asset?
+- Does expected fee income compensate for inventory loss, adverse selection, gas, slippage, taxes and failed execution?
+- Which historical situations are genuinely comparable, and what happened under each possible response?
+- When conditions change, can the system detect the change and rerun the decision before the user notices it manually?
 
-Observe range proximity, token exposure, changes in volume/active liquidity, exit depth, fee coverage and stale sources. Always compare HOLD. Out-of-range does not imply reposition. Withdrawal does not imply selling. Separate inventory value, collected/accrued fees, future fee assumptions, execution costs, historical replay and realized PnL. Missing cost basis prevents cumulative profit claims. Graph Uniswap data is not full meme/project/social risk coverage.
+The real product is therefore not a price predictor. It is a **decision system under uncertainty**: forecast distributions and historical analogs feed deterministic LP accounting, strategy comparison and explicit action policies.
+
+## Target product experience
+
+Use Uniswap's core interaction model as the starting point—token/pool selection, liquidity positions, range charts, transactions and wallet state—but reconstruct the experience around the position lifecycle.
+
+1. **Explore** — find and compare verified Uniswap pools using liquidity, volume, fee generation, volatility, active depth, token risk and data freshness.
+2. **Position** — inspect an existing position or design a new one; show range, inventory, fees, cost basis, PnL decomposition and exit value.
+3. **Forecast** — replay comparable periods, construct forward scenarios and estimate a distribution of future price/range states.
+4. **Strategy** — compare no action, keep range, widen, recenter, reduce, withdraw, or exit under the same assumptions.
+5. **Monitor** — let the AI watch market, pool and position state continuously, explain material changes and rerun analysis when triggers fire.
+6. **Act** — prepare a transparent transaction plan; execute only with the user's current approval or inside a separately approved, revocable mandate.
+7. **Review** — reconcile the actual on-chain result with the prediction and improve future recommendations without rewriting history.
+
+The product may borrow interaction patterns from Uniswap, but must not imply affiliation, copy protected brand assets, or hide when a capability is supplied by a third party.
+
+## Core feature: analog replay, forecast and response selection
+
+### Inputs
+
+Freeze every analysis to identified and timestamped evidence:
+
+- chain, protocol version, pool, token addresses, fee tier and tick spacing;
+- current price, ticks, active liquidity, depth, volume, fees and data freshness;
+- position range, liquidity, token inventory, accrued/collected fees and cost basis when available;
+- user objective, horizon, maximum acceptable loss/drawdown, action frequency, preferred terminal asset and execution limits;
+- market context that can be reproduced, such as volatility, trend, liquidity change and volume regime.
+
+Missing data is unknown, not zero. A stale or mismatched dataset cannot authorize an action.
+
+### Comparable-case retrieval
+
+Retrieve several historical windows that resemble the current state using explicit features and distance metrics. Show why each case was selected, its date range, data coverage and meaningful differences from the present. Avoid choosing only favorable examples.
+
+Historical analogs are evidence about possible paths, not proof that the same outcome will repeat. Regime changes, token-specific events, changing liquidity and reflexive market behavior can invalidate similarity.
+
+### Replay and forward scenarios
+
+For each analog and generated scenario, replay the position under a shared set of candidate policies:
+
+- no action / HOLD;
+- keep the current range;
+- widen the range;
+- recenter the range;
+- reduce liquidity;
+- withdraw and retain the resulting assets;
+- withdraw and, only when explicitly requested and executable, convert toward a target asset.
+
+Evaluate inventory value, LP fees, impermanent loss relative to holding, gas, slippage, price impact, token taxes where applicable, execution delay/failure, maximum drawdown and realistic exit value. Do not double-count impermanent loss or treat displayed APR as net profit.
+
+### Forecast output
+
+Return a distribution and scenarios, not a single-point oracle:
+
+- probability-weighted price/range states over the selected horizon;
+- expected and downside outcomes for every candidate policy;
+- confidence, evidence quality and the variables that dominate the result;
+- a recommended range and response policy only when it beats the no-action baseline by a meaningful margin after costs;
+- “insufficient evidence” or “do nothing” when the ranking is unstable.
+
+“Best range” means best under the user's stated objective and the model's explicit assumptions. It is not universally optimal and must be recalculated when those assumptions change.
+
+## Monitoring agent
+
+The monitoring agent replaces repetitive human observation, not human ownership of risk.
+
+It continuously watches:
+
+- distance to range boundaries and time out of range;
+- volatility/trend regime changes and forecast drift;
+- active liquidity, volume, fee generation and exit depth;
+- token/pool anomalies, depeg or contract-risk signals where supported;
+- data-source freshness and disagreement;
+- accumulated fees versus the cost and risk of taking action;
+- wallet, allowance, transaction and mandate state.
+
+Triggers should rerun the deterministic analysis and produce one of: **observe**, **alert**, **prepare action**, or **execute within mandate**. Out-of-range alone is not an automatic recenter signal. Cooldowns, minimum benefit thresholds and failure recovery must prevent churn and repeated transactions.
+
+## AI and deterministic systems
+
+- AI identifies relevant evidence, retrieves analogs, proposes scenarios, explains differences and turns the user's objectives into bounded candidate policies.
+- Deterministic code performs Uniswap math, replay, accounting, cost estimates, policy checks and transaction construction.
+- The policy engine controls allowed chains, pools, positions, actions, amounts, slippage, costs, frequency, expiry and recipients.
+- The model never holds keys, approves its own authority, changes hard limits, or converts a weak forecast into permission to trade.
+
+Every recommendation must be reproducible from a versioned snapshot: source data, feature set, analogs, scenarios, assumptions, model/version, calculator/version and policy/version.
+
+## MVP
+
+Build a narrow vertical slice before recreating all of Uniswap:
+
+- one supported Uniswap concentrated-liquidity version and chain;
+- a curated set of verified pools;
+- import one existing position or create one draft position;
+- current-state position accounting and no-action baseline;
+- historical analog retrieval for a fixed set of reproducible features;
+- replay of at least three response policies, including no action and withdrawal;
+- range recommendation with downside, costs, confidence and failure-to-recommend state;
+- durable monitoring that reruns analysis on schedule and on material triggers;
+- alert and reviewable action plan; capital execution remains approval-gated until separately authorized and accepted.
+
+Do not make v1 a universal DEX terminal, autonomous market timer, social-signal engine, leverage/hedging platform, arbitrary-token discovery system or guaranteed-yield product.
 
 ## Acceptance
-Complete means a real Graph-to-AI-to-calculator-to-UI flow, actual Privy authentication and wallet authority checks, reproducible isolated LP lifecycle/automatic trigger/recovery tests, and explicitly authorized live entry/management evidence. Fixtures, a generated plan, a wallet button, mock Graph or read-only pages cannot substitute. Record local, isolated, live-provider, mainnet and deployed evidence separately. If a natural trigger does not occur, label an isolated replay honestly.
 
-## Release
-Primary partner targets: The Graph AI Use Case, Uniswap and Privy financial flow. LI.FI is a functional integration, not a fourth prize selection. Official submission deadline: 2026-09-13 12:00 America/New_York = 2026-09-14 00:00 Asia/Shanghai. Event end September 16 is not the submission deadline. Human-narrated 2–4 minute video, license, Uniswap feedback form and AI artifact disclosure remain independent gates.
+A feature is complete only when:
+
+1. real Uniswap/chain data is identified, fresh and reproducible;
+2. historical windows and similarity scores can be independently replayed;
+3. LP accounting reconciles inventory, fees, holding baseline and all modeled costs;
+4. changing one decisive assumption changes the ranking in the expected direction;
+5. no-action can win and insufficient evidence can block a recommendation;
+6. monitoring survives restart, deduplicates triggers and records every state transition;
+7. proposed actions expose asset outcomes, costs, permissions and recovery paths;
+8. any executed test is reconciled to on-chain receipts and wallet state;
+9. backtest, paper, testnet, mainnet and deployed evidence are reported separately.
+
+The strongest failure mode is false confidence: a polished AI answer overfits a few analogs, ignores a regime change and causes costly churn or one-sided inventory loss. The product must prefer calibrated uncertainty and inaction over a precise but weakly supported recommendation.
+
+## Legacy baseline
+
+The existing hackathon code, Base Sepolia runs and September 2026 release documents are retained as historical evidence. They may supply validated components or test cases after review, but vNext may start in a new package or repository architecture. No legacy component is assumed reusable until its data model, security boundary and product fit are revalidated.
